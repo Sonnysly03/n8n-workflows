@@ -1,0 +1,1746 @@
+{
+  "name": "Customer Feedback System Flow B",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "Label_8412421577355232309"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2224,
+        -112
+      ],
+      "id": "e60c3e1c-f7f8-4de4-afb3-423ff0fffc49",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5WpuccSKvtSSNVi0",
+          "name": "Check up Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You score customer feedback for an auto repair chain. Reply with ONLY valid JSON, no prose, no markdown fences, no code blocks:\n{\"sentiment_score\": number from -1 (furious) to 1 (delighted), \"severity\": \"low\"|\"medium\"|\"high\" (only meaningful when sentiment_score is negative, otherwise null), \"confidence\": number 0-1, \"category\": short label like \"wait time\"|\"quality\"|\"price\"|\"communication\"|\"other\", \"summary\": one-sentence summary of what they said}\nJudge severity by real-world impact (safety issue, money lost, repeat failure) not just tone.\nIf the customer describes any problem that is still unresolved, even alongside praise, sentiment_score must be negative (-0.2 or lower) and severity must be at least \"low\"."
+            },
+            {
+              "content": "={{ $('Code in JavaScript').item.json.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -1328,
+        -112
+      ],
+      "id": "e51ee13f-61f5-4705-b81c-b4bb34385c99",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qdtm7wnMWe7jTZzQ",
+          "name": "Customer Feedback"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2000,
+        -112
+      ],
+      "id": "09774829-0279-4353-9948-42c4bcf3c12b",
+      "name": "Get a message",
+      "webhookId": "cb785533-74ef-48ac-bf7f-71bf1e180508",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5WpuccSKvtSSNVi0",
+          "name": "Check up Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text || '';\nconst cleaned = raw.split(/On .+wrote:/s)[0].trim();\n\nreturn [{\n  json: {\n    message: cleaned,\n    from_email: $json.from.value[0].address,\n    from_name: $json.from.value[0].name,\n    subject: $json.subject\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        -112
+      ],
+      "id": "f69f1c59-678a-43b6-b823-84d546d66440",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $json.output[0].content[0].text;\nconst original = $('Find Request').item.json.fields;\n\nreturn [{\n  json: {\n    feedback_id: original['Feedback ID'],\n    job_id: original['Job ID'],\n    customer_id: original['Customer ID'],\n    customer_name: original['Customer Name'],\n    location: original['Location'],\n    message: $('Code in JavaScript').item.json.message,\n    sentiment_score: aiOutput.sentiment_score,\n    severity: aiOutput.severity,\n    confidence: aiOutput.confidence,\n    category: aiOutput.category,\n    summary: aiOutput.summary\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        -112
+      ],
+      "id": "ed7df0cf-3732-48c3-b7bf-45c7a84ff887",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2a957518-31ef-487b-a7bb-6e97b01fc5b6",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 0.55,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "29f9aa56-f9e5-4e1b-9389-82528a1dc285",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b6deeb56-1fd1-4712-8f06-1243c5eeeb54",
+              "leftValue": "={{ $json.sentiment_score }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        -112
+      ],
+      "id": "60bdb7fb-2b07-4eb5-8fe4-248ac307e42b",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJxfktuSlKmoDjm",
+          "mode": "list",
+          "cachedResultName": "Feedback Analysis",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJxfktuSlKmoDjm"
+        },
+        "filterByFormula": "=AND({Customer ID} = '{{ $json.customer_id }}', OR({Route} = 'private_queue', {Route} = 'escalate'))",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        -96
+      ],
+      "id": "c710a720-ad54-440c-9077-2594b33120c2",
+      "name": "Search records1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const scored = $('Code in JavaScript1').item.json;\n\nconst historyResults = $('Search records1').all().filter(item => item.json.id);\nconst priorNegativeCount = historyResults.length;\nconst isRepeatOffender = priorNegativeCount >= 1;\n\nconst hasIssue = ['low', 'medium', 'high'].includes(scored.severity);\n\nlet routing;\nif (scored.severity === 'high') {\n  routing = 'escalate';\n} else if (isRepeatOffender && (hasIssue || scored.sentiment_score <= 0.2)) {\n  routing = 'escalate';\n} else if (scored.sentiment_score > 0.2 && !hasIssue) {\n  routing = 'ready_to_post';\n} else {\n  routing = 'private_queue';\n}\n\nreturn [{\n  json: {\n    ...scored,\n    prior_negative_count: priorNegativeCount,\n    is_repeat_offender: isRepeatOffender,\n    routing\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        -96
+      ],
+      "id": "1e9492e3-3e5b-4b44-acd0-1ba9ec53404e",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcj67YqELMrLBDy",
+          "mode": "id"
+        },
+        "filterByFormula": "=AND({Email} = '{{ $json.from_email }}', {Status} = 'Awaiting Reply')",
+        "returnAll": false,
+        "limit": 1,
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "Sent At",
+              "direction": "desc"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -1552,
+        -112
+      ],
+      "id": "dd5f9b94-b569-4b5f-8266-48d059a785df",
+      "name": "Find Request",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.routing }}",
+                    "rightValue": "ready_to_post",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4277f248-dcbd-458b-a0d2-0c76f6141479"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ready_to_post"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a8c1b775-7bd8-49fc-8a6f-8b25f0fdf32b",
+                    "leftValue": "={{ $json.routing }}",
+                    "rightValue": "private_queue",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5f0bb187-3279-4ca7-b189-b8ade706830c",
+                    "leftValue": "={{ $json.routing }}",
+                    "rightValue": "escalate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "escalate"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        -112
+      ],
+      "id": "9c3959bf-e345-40ad-b99d-fae4acb41129",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJxfktuSlKmoDjm",
+          "mode": "list",
+          "cachedResultName": "Feedback Analysis",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJxfktuSlKmoDjm"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback ID": "={{ $json.feedback_id }}",
+            "Job ID": "={{ $json.job_id }}",
+            "Customer ID": "={{ $json.customer_id }}",
+            "Customer Name": "={{ $json.customer_name }}",
+            "Location": "={{ $json.location }}",
+            "Confidence": "={{ $json.confidence }}",
+            "Feedback": "={{ $json.message }}",
+            "Sentiment": "={{ $json.sentiment_score > 0.2 ? 'Positive' : $json.sentiment_score < -0.2 ? 'Negative' : 'Neutral' }}",
+            "Severity": "={{ $json.severity === 'high' ? 3 : $json.severity === 'medium' ? 2 : $json.severity === 'low' ? 1 : 0 }}",
+            "Category": "={{ $('Code in JavaScript2').item.json.category }}",
+            "Previous Negatives": "={{ $('Code in JavaScript2').item.json.prior_negative_count }}",
+            "Route": "={{ $('Code in JavaScript2').item.json.routing }}",
+            "AI Summary": "={{ $('Code in JavaScript2').item.json.summary }}",
+            "Status": "Todo"
+          },
+          "matchingColumns": [
+            "Feedback ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback ID",
+              "displayName": "Feedback ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Positive",
+                  "value": "Positive"
+                },
+                {
+                  "name": "Negative",
+                  "value": "Negative"
+                },
+                {
+                  "name": "Neutral",
+                  "value": "Neutral"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Previous Negatives",
+              "displayName": "Previous Negatives",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Route",
+              "displayName": "Route",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Draft Response",
+              "displayName": "Draft Response",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        272
+      ],
+      "id": "5465ee92-1bac-445f-b26e-e68bfef8fe70",
+      "name": "Write to Feedback Analysis",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Customer {{ $('Code in JavaScript2').item.json.customer_name }} at {{ $('Code in JavaScript2').item.json.location }} wrote: \"{{ $('Code in JavaScript2').item.json.message }}\""
+            },
+            {
+              "role": "system",
+              "content": "You write short, specific, non-templated replies from an auto repair shop to a customer, referencing exactly what they said. For escalated/serious issues, take real ownership — no corporate hedging, no placeholders. Warm but not groveling for milder issues. Sign off as \"The [Location] Team\". Reply with the message text only, nothing else — no JSON, no markdown."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        592,
+        272
+      ],
+      "id": "e3f23626-ad12-4c24-9f99-157adde8a8bd",
+      "name": "Draft a Response",
+      "credentials": {
+        "openAiApi": {
+          "id": "qdtm7wnMWe7jTZzQ",
+          "name": "Customer Feedback"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const scored = $('Code in JavaScript1').item.json;\n\nconst historyResults = $('Search records1').all().filter(item => item.json.id);\nconst priorNegativeCount = historyResults.length;\nconst isRepeatOffender = priorNegativeCount >= 1;\n\nlet routing;\nif (scored.severity === 'high') {\n  routing = 'escalate'; // safety/serious issues always escalate, regardless of overall tone\n} else if (isRepeatOffender && scored.sentiment_score <= 0.2) {\n  routing = 'escalate';\n} else if (scored.sentiment_score > 0.2) {\n  routing = 'ready_to_post';\n} else {\n  routing = 'private_queue';\n}\n\nreturn [{\n  json: {\n    ...scored,\n    prior_negative_count: priorNegativeCount,\n    is_repeat_offender: isRepeatOffender,\n    routing\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        272
+      ],
+      "id": "05acb81c-a188-40fe-a6f7-b0a871730f71",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output[0].content[0].text;\nconst cleaned = raw\n  .replace(/\\n{3,}/g, '\\n\\n')   // collapse 3+ line breaks down to a max of one blank line\n  .trim();\n\nreturn [{ json: { draft_response: cleaned } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        272
+      ],
+      "id": "0d82daf2-1535-4c22-91e1-85d88f7d8936",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJxfktuSlKmoDjm",
+          "mode": "list",
+          "cachedResultName": "Feedback Analysis",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJxfktuSlKmoDjm"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback ID": "={{ $('Code in JavaScript2').item.json.feedback_id }}",
+            "Draft Response": "={{ $json.draft_response }}"
+          },
+          "matchingColumns": [
+            "Feedback ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback ID",
+              "displayName": "Feedback ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Positive",
+                  "value": "Positive"
+                },
+                {
+                  "name": "Negative",
+                  "value": "Negative"
+                },
+                {
+                  "name": "Neutral",
+                  "value": "Neutral"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Previous Negatives",
+              "displayName": "Previous Negatives",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Route",
+              "displayName": "Route",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Draft Response",
+              "displayName": "Draft Response",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1232,
+        272
+      ],
+      "id": "d845291d-57f2-496e-a489-f3e9624662c3",
+      "name": "Save draft response",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "hajimeautomationgroup30+manager-alert@gmail.com",
+        "subject": "=🚨 URGENT — {{ $('Code in JavaScript2').item.json.location }} — {{ $('Code in JavaScript2').item.json.customer_name }}",
+        "emailType": "text",
+        "message": "={{ $('Code in JavaScript2').item.json.is_repeat_offender ? 'REPEAT negative customer' : 'Severity: ' + $('Code in JavaScript2').item.json.severity }}  \"{{ $('Code in JavaScript2').item.json.message }}\"  Draft response ready in Feedback Analysis — Feedback ID: {{ $('Code in JavaScript2').item.json.feedback_id }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1728,
+        256
+      ],
+      "id": "ccb6e67b-09b0-448c-9643-d9997b1999bb",
+      "name": "Manager Alert",
+      "webhookId": "232a4146-5a4e-4be1-8197-a4100dbd418f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5WpuccSKvtSSNVi0",
+          "name": "Check up Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJxfktuSlKmoDjm",
+          "mode": "list",
+          "cachedResultName": "Feedback Analysis",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJxfktuSlKmoDjm"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback ID": "={{ $json.feedback_id }}",
+            "Job ID": "={{ $json.job_id }}",
+            "Customer ID": "={{ $json.customer_id }}",
+            "Customer Name": "={{ $json.customer_name }}",
+            "Location": "={{ $json.location }}",
+            "Feedback": "={{ $json.message }}",
+            "Sentiment": "={{ $json.sentiment_score > 0.2 ? 'Positive' : $json.sentiment_score < -0.2 ? 'Negative' : 'Neutral' }}",
+            "Severity": "={{ $json.severity === 'high' ? 3 : $json.severity === 'medium' ? 2 : $json.severity === 'low' ? 1 : 0 }}",
+            "Confidence": "={{ $json.confidence }}",
+            "Category": "={{ $json.category }}",
+            "AI Summary": "={{ $json.summary }}",
+            "Previous Negatives": "={{ $json.prior_negative_count }}",
+            "Status": "Todo",
+            "Route": "={{ $json.routing }}"
+          },
+          "matchingColumns": [
+            "Feedback ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback ID",
+              "displayName": "Feedback ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Positive",
+                  "value": "Positive"
+                },
+                {
+                  "name": "Negative",
+                  "value": "Negative"
+                },
+                {
+                  "name": "Neutral",
+                  "value": "Neutral"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Previous Negatives",
+              "displayName": "Previous Negatives",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Route",
+              "displayName": "Route",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Draft Response",
+              "displayName": "Draft Response",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        -96
+      ],
+      "id": "39d723a9-09a6-41e5-afa4-43fd73aeb8c0",
+      "name": "Private Queue",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJxfktuSlKmoDjm",
+          "mode": "list",
+          "cachedResultName": "Feedback Analysis",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJxfktuSlKmoDjm"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback ID": "={{ $('Code in JavaScript2').item.json.feedback_id }}",
+            "Job ID": "={{ $('Code in JavaScript2').item.json.job_id }}",
+            "Customer ID": "={{ $('Code in JavaScript2').item.json.customer_id }}",
+            "Customer Name": "={{ $('Code in JavaScript2').item.json.customer_name }}",
+            "Location": "={{ $('Code in JavaScript2').item.json.location }}",
+            "Feedback": "={{ $('Code in JavaScript2').item.json.message }}",
+            "Sentiment": "={{ $json.sentiment_score > 0.2 ? 'Positive' : $json.sentiment_score < -0.2 ? 'Negative' : 'Neutral' }}",
+            "Severity": "={{ $json.severity === 'high' ? 3 : $json.severity === 'medium' ? 2 : $json.severity === 'low' ? 1 : 0 }}",
+            "Confidence": "={{ $('Code in JavaScript2').item.json.confidence }}",
+            "Category": "={{ $('Code in JavaScript2').item.json.category }}",
+            "Route": "={{ $('Code in JavaScript2').item.json.routing }}",
+            "Previous Negatives": "={{ $('Code in JavaScript2').item.json.prior_negative_count }}",
+            "AI Summary": "={{ $('Code in JavaScript2').item.json.summary }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "Feedback ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback ID",
+              "displayName": "Feedback ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Positive",
+                  "value": "Positive"
+                },
+                {
+                  "name": "Negative",
+                  "value": "Negative"
+                },
+                {
+                  "name": "Neutral",
+                  "value": "Neutral"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Confidence",
+              "displayName": "Confidence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Previous Negatives",
+              "displayName": "Previous Negatives",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Route",
+              "displayName": "Route",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Draft Response",
+              "displayName": "Draft Response",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        -352
+      ],
+      "id": "48bbeadf-4d7b-4c7f-b047-0cf5f6097663",
+      "name": "Save the score",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cde153c6-0f83-44e2-86b5-a8a929dfadfa",
+              "leftValue": "={{ $('Code in JavaScript2').item.json.routing }}",
+              "rightValue": "escalate",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        272
+      ],
+      "id": "0c66705f-27c0-4c9c-8818-054ecd9b5ec5",
+      "name": "If1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Find Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Search records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Save the score",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Private Queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write to Feedback Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write to Feedback Analysis": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft a Response": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Draft a Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Save draft response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save draft response": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Private Queue": {
+      "main": [
+        [
+          {
+            "node": "Draft a Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Manager Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b9b063fb-d980-4303-a41c-bf08778822d9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ef94264a22a1e43e5770da9224f9c49cfacdf3f96247a464425d293bbebd439c"
+  },
+  "nodeGroups": [],
+  "id": "QwoZroGvd8AO5Szt",
+  "tags": []
+}

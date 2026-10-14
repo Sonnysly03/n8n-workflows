@@ -1,0 +1,649 @@
+{
+  "name": "Customer Feedback System Flow A",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3b4fefb3-a168-41cd-a0f5-2ac255fb746b",
+              "leftValue": "={{ $json.fields.Status }}",
+              "rightValue": "Completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d7beb118-30fd-4a63-9cbb-be20236d5b6f",
+              "leftValue": "={{ $json.fields['Feedback Sent'] }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -864,
+        -48
+      ],
+      "id": "84e729da-f4dd-4eef-812b-b088903efc72",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4b32aba-77af-4c31-ba13-fff97059fff4",
+              "name": "job_id",
+              "value": "={{ $json.fields['Job ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "bd54a12e-0282-4478-8883-0c5ba6ed5489",
+              "name": "customer_id",
+              "value": "={{ $json.fields['Customer ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a1037793-affa-4a3c-9c0c-902f1ccb8468",
+              "name": "customer_name",
+              "value": "={{ $json.fields['Customer Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "902fc104-58aa-450f-834f-8d37392518b3",
+              "name": "email",
+              "value": "={{ $json.fields.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "0caf0453-2fa8-4ff5-9711-01f64f2f04c2",
+              "name": "phone",
+              "value": "={{ $json.fields.Phone }}",
+              "type": "string"
+            },
+            {
+              "id": "cb30d614-0e26-4844-b2c9-8bb394fbb231",
+              "name": "location",
+              "value": "={{ $json.fields.Location }}",
+              "type": "string"
+            },
+            {
+              "id": "b4b1f164-a992-4a91-ab6c-033be8fe92be",
+              "name": "service",
+              "value": "={{ $json.fields.Service }}",
+              "type": "string"
+            },
+            {
+              "id": "e5e81034-ac48-4191-8743-91c107662ae1",
+              "name": "vehicle",
+              "value": "={{ $json.fields.Vehicle }}",
+              "type": "string"
+            },
+            {
+              "id": "5cbeee74-6f64-4471-a722-a34b18cc2bdc",
+              "name": "status",
+              "value": "={{ $json.fields.Status }}",
+              "type": "string"
+            },
+            {
+              "id": "a98b2282-a64c-45ff-9562-2ae253004b2f",
+              "name": "feedback_id",
+              "value": "={{ $json.fields['Job ID'] }}-FB",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -528,
+        -64
+      ],
+      "id": "1e661daa-7e20-4c17-967d-702a4d6d24b0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "How was your experience with us?",
+        "emailType": "text",
+        "message": "=Hi {{ $json.fields['Customer Name'] }},\n\nThanks for visiting us at {{ $json.fields['Location'] }} for your {{ $json.fields['Service'] }}. We'd love to hear how it went — just reply to this email and let us know.\n\nThanks,\nThe Team",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "hajimeautomationgroup30+feedback@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "95ba5bda-6e03-4595-9909-c3451dc8a54c",
+      "name": "Feedback Request Email",
+      "webhookId": "515a1b42-276c-4950-b980-f3840bea40bd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5WpuccSKvtSSNVi0",
+          "name": "Check up Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback System",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblJwbYQzRSetDOQ2",
+          "mode": "list",
+          "cachedResultName": "Service Jobs",
+          "cachedResultUrl": "https://airtable.com/appOjYfXuFj4AE3NE/tblJwbYQzRSetDOQ2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback Sent": true,
+            "id": "={{ $('Get Service Jobs').item.json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Vehicle",
+              "displayName": "Vehicle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Scheduled",
+                  "value": "Scheduled"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Cancelled",
+                  "value": "Cancelled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Completed At",
+              "displayName": "Completed At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback Sent",
+              "displayName": "Feedback Sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Table 2",
+              "displayName": "Table 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        -64
+      ],
+      "id": "d5a42144-2f39-46a4-ac2c-9f9834d97bcd",
+      "name": "Update \"Service Jobs Feedback\" Status",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcj67YqELMrLBDy",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Feedback Received": false,
+            "Feedback ID": "={{ $json.feedback_id }}",
+            "Job ID": "={{ $json.job_id }}",
+            "Customer Name": "={{ $json.customer_name }}",
+            "Customer ID": "={{ $json.customer_id }}",
+            "Email": "={{ $json.email }}",
+            "Service": "={{ $json.service }}",
+            "Location": "={{ $json.location }}",
+            "Sent At": "={{ $now.toISO() }}",
+            "Status": "Awaiting Reply"
+          },
+          "matchingColumns": [
+            "Job ID"
+          ],
+          "schema": [
+            {
+              "id": "Feedback ID",
+              "displayName": "Feedback ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Job ID",
+              "displayName": "Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer ID",
+              "displayName": "Customer ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Sent At",
+              "displayName": "Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Awaiting Reply",
+                  "value": "Awaiting Reply"
+                },
+                {
+                  "name": "Received",
+                  "value": "Received"
+                },
+                {
+                  "name": "Closed",
+                  "value": "Closed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback Received",
+              "displayName": "Feedback Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        -64
+      ],
+      "id": "9ce89eb3-ef19-4198-9714-a23fc65bb430",
+      "name": "Create Feedback Request",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableOAuth2Api",
+        "baseId": {
+          "__rl": true,
+          "value": "appOjYfXuFj4AE3NE",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "tblJwbYQzRSetDOQ2",
+          "mode": "id"
+        },
+        "triggerField": "Last Modified",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        -48
+      ],
+      "id": "38887a23-391a-4b01-8f77-901e4296de99",
+      "name": "Get Service Jobs",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "NveWCxIImgYO05l9",
+          "name": "Cuustomer Feedback System"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create Feedback Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feedback Request Email": {
+      "main": [
+        [
+          {
+            "node": "Update \"Service Jobs Feedback\" Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Feedback Request": {
+      "main": [
+        [
+          {
+            "node": "Feedback Request Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Service Jobs": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ea29d5ff-cbc2-4035-80e6-4a144ac5162c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ef94264a22a1e43e5770da9224f9c49cfacdf3f96247a464425d293bbebd439c"
+  },
+  "nodeGroups": [],
+  "id": "NVIriiybJTTS7OYp",
+  "tags": []
+}
