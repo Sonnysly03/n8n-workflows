@@ -1,0 +1,738 @@
+{
+  "name": "Departmental Dues Receipt (Demo)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Record a Payment",
+        "formDescription": "Enter the payment received at the office. A receipt is generated and emailed to the student.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Matric Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Purpose",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Departmental Dues"
+                  },
+                  {
+                    "option": "Handbook"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Amount",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Session",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2025/2026"
+                  },
+                  {
+                    "option": "2026/2027"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "path": "receipt-entry",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Payment recorded. The receipt will be emailed shortly."
+            }
+          }
+        }
+      },
+      "id": "b12cdecd-5a3d-4b52-9971-9c683962e23d",
+      "name": "Receipt Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "eee4de79-6ea8-4dec-bee3-5ccf228367b7"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Students"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $json['Matric Number'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "106ab518-f53d-4bfa-84f0-030db345f292",
+      "name": "Student Lookup",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Matric No'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e2f5e034-fa4e-40ad-bb22-4df4ababf956",
+      "name": "Student Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "options": {}
+      },
+      "id": "ce45160e-7eb5-4fd1-b220-97a6e954f3f4",
+      "name": "Read Register",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        -80
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const OFFICE_EMAIL = 'office@example.com';\nconst PREFIXES = { 'Departmental Dues': 'DD', 'Handbook': 'HB' };\nconst form = $('Receipt Form').first().json;\nconst student = $('Student Lookup').first().json;\nconst rows = $('Read Register').all().map(function (i) { return i.json; }).filter(function (r) { return r['Receipt No']; });\nconst amount = Number(form['Amount']);\nconst session = String(form['Session']);\nconst sessionShort = session.replace(/\\d{2}(\\d{2})\\/\\d{2}(\\d{2})/, '$1$2');\nconst code = PREFIXES[form['Purpose']] || 'XX';\nconst sameKind = rows.filter(function (r) { return r['Purpose'] === form['Purpose'] && String(r['Session']) === session; });\nconst seq = String(sameKind.length + 1).padStart(4, '0');\nconst receiptNo = 'COM/' + code + '/' + sessionShort + '/' + seq;\nconst date = new Date().toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos' });\nreturn [{ json: {\n  receiptNo: receiptNo, fileName: receiptNo.replace(/\\//g, '-') + '.pdf', date: date, session: session, amount: amount,\n  name: student['Name'], matric: student['Matric No'], level: student['Level'], purpose: form['Purpose'],\n  duplicateNote: '', to: student['Email'] || OFFICE_EMAIL\n} }];"
+      },
+      "id": "6b957d62-8a77-4448-be09-746eeca46fcc",
+      "name": "Build Receipt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "receipt",
+        "name": "={{ $('Build Receipt').first().json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1l2YIkYYUe9RNcKM9g4McEdkpiXT-uCYE",
+          "mode": "list",
+          "cachedResultName": "Dungeonexpeeriment",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1l2YIkYYUe9RNcKM9g4McEdkpiXT-uCYE"
+        },
+        "options": {}
+      },
+      "id": "d59a6167-cbd3-4a75-99f1-86fa3b2094b1",
+      "name": "Save to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        -160
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "JdmpBig6Nn8zRot9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Receipt No": "={{ $('Build Receipt').first().json.receiptNo }}",
+            "Date": "={{ $('Build Receipt').first().json.date }}",
+            "Matric No": "={{ $('Build Receipt').first().json.matric }}",
+            "Name": "={{ $('Build Receipt').first().json.name }}",
+            "Level": "={{ $('Build Receipt').first().json.level }}",
+            "Purpose": "={{ $('Build Receipt').first().json.purpose }}",
+            "Session": "={{ $('Build Receipt').first().json.session }}",
+            "Amount": "={{ $('Build Receipt').first().json.amount }}",
+            "Drive Link": "=https://drive.google.com/file/d/{{ $json.id }}/view",
+            "Email Status": "={{ /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(String($('Student Lookup').first().json.Email || '').trim()) ? 'Sent' : 'NOT SENT: missing or invalid email' }}"
+          },
+          "schema": [
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Receipt No",
+              "id": "Receipt No",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Date",
+              "id": "Date",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Matric No",
+              "id": "Matric No",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Name",
+              "id": "Name",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Level",
+              "id": "Level",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Purpose",
+              "id": "Purpose",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Session",
+              "id": "Session",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Amount",
+              "id": "Amount",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Drive Link",
+              "id": "Drive Link",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Email Status",
+              "id": "Email Status",
+              "required": false,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "79d622f8-3b9a-4e37-bb96-0423106a71a0",
+      "name": "Log in Register",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1680,
+        -160
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sylvesterchidera77@gmail.com",
+        "subject": "Receipt NOT generated: matric number not found",
+        "emailType": "text",
+        "message": "=A payment was entered with matric number {{ $('Receipt Form').first().json['Matric Number'] }} but no student with that number is on the Students sheet. Please check the number and re-submit the form.",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "id": "c925936d-543d-43f3-871c-516e00e48a1f",
+      "name": "Alert Office",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        128
+      ],
+      "webhookId": "d39b38b1-3ea4-4582-9179-5f85f63b42b1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sAGkvePvnEzVSi4M",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ String($('Student Lookup').first().json.Email).trim() }}",
+        "subject": "=Payment receipt {{ $('Build Receipt').first().json.receiptNo }}",
+        "emailType": "text",
+        "message": "=Dear {{ $('Build Receipt').first().json.name }},\n\nWe have received your payment of N{{ $('Build Receipt').first().json.amount }} for {{ $('Build Receipt').first().json.purpose }} ({{ $('Build Receipt').first().json.session }}).\n\nYour receipt (No. {{ $('Build Receipt').first().json.receiptNo }}) is attached. Keep it safe. If you ever lose it, contact the office with your matric number and a copy will be re-sent free of charge.\n\nCollege of Medicine",
+        "options": {
+          "appendAttribution": true,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "receipt"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f9c0ad2f-d181-48de-96dd-1112e536963e",
+      "name": "Email Receipt",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        -16
+      ],
+      "webhookId": "7c5eb129-f3c7-48bf-9bb1-e46edb5ddaa5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sAGkvePvnEzVSi4M",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "verify-receipt",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "de21f2de-2de7-4a34-a2c9-0194a5f87e43",
+      "name": "Verify Link",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        400
+      ],
+      "webhookId": "905b40f6-cacb-4fb2-bf58-609f720ee961"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Receipt No",
+              "lookupValue": "={{ $json.query.no }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2531d80-8511-4ef0-b201-f01180267a4b",
+      "name": "Lookup Receipt",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        400
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst row = $input.first().json;\nconst esc = function (s) { return String(s == null ? '' : s).replace(/[&<>\"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]; }); };\nconst mask = function (n) { const p = String(n || '').trim().split(/\\s+/); return p[0] + ' ' + p.slice(1).map(function (x) { return x[0] + '.'; }).join(' '); };\nconst page = function (body) { return '<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><body style=\"font-family:Arial,sans-serif;max-width:420px;margin:40px auto;padding:0 16px\">' + body + '</body>'; };\nlet html;\nif (row && row['Receipt No']) {\n  html = page('<h2 style=\"color:#1a7f37\">&#10004; Genuine receipt</h2><p><b>Receipt No:</b> ' + esc(row['Receipt No']) + '<br><b>Date:</b> ' + esc(row['Date']) + '<br><b>Student:</b> ' + esc(mask(row['Name'])) + '<br><b>Level:</b> ' + esc(row['Level']) + '<br><b>Purpose:</b> ' + esc(row['Purpose']) + ' (' + esc(row['Session']) + ')<br><b>Amount:</b> &#8358;' + esc(row['Amount']) + '</p><p style=\"color:#666;font-size:12px\">Issued by the College of Medicine office.</p>');\n} else {\n  html = page('<h2 style=\"color:#b42318\">&#10008; Receipt not found</h2><p>No receipt with this number exists in the register. Please contact the office.</p>');\n}\nreturn [{ json: { html: html } }];\n"
+      },
+      "id": "690e6808-9dc8-47ff-ac47-7906b1882e16",
+      "name": "Build Verify Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "5893fa3d-e28d-4e1e-8882-ad504f268eaf",
+      "name": "Show Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "email-ok",
+              "leftValue": "={{ /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(String($('Student Lookup').first().json.Email || '').trim()) }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "e5942232-4cf5-467d-8729-fc7fefec8406",
+      "name": "Email Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "sylvesterchidera77@gmail.com",
+        "subject": "=Receipt NOT emailed: fix email for {{ $('Build Receipt').first().json.name }}",
+        "emailType": "text",
+        "message": "=Receipt {{ $('Build Receipt').first().json.receiptNo }} was created and saved, but it was NOT emailed because the student's email is missing or badly formed.\n\nStudent: {{ $('Build Receipt').first().json.name }} ({{ $('Build Receipt').first().json.matric }})\nEmail on file: {{ $('Student Lookup').first().json.Email || '(blank)' }}\n\nTo fix: correct the email in the Students sheet, then use the Re-send form with this matric number, purpose and session. The saved receipt will be sent to the corrected address.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b2baae00-a68b-4ffc-9d34-3bad6ad56a43",
+      "name": "Alert Email Not Sent",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        208
+      ],
+      "webhookId": "1734c2c0-464a-4429-9701-2870da5eb5d9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sAGkvePvnEzVSi4M",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "nOP4BgsXeKnclGvL"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "06c2ed83-bc31-4ac6-8778-101effde4891",
+      "name": "Render Receipt",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        -80
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receipt Form": {
+      "main": [
+        [
+          {
+            "node": "Student Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Lookup": {
+      "main": [
+        [
+          {
+            "node": "Student Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Found?": {
+      "main": [
+        [
+          {
+            "node": "Read Register",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Office",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Register": {
+      "main": [
+        [
+          {
+            "node": "Build Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Drive": {
+      "main": [
+        [
+          {
+            "node": "Log in Register",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Link": {
+      "main": [
+        [
+          {
+            "node": "Lookup Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Receipt": {
+      "main": [
+        [
+          {
+            "node": "Build Verify Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Verify Page": {
+      "main": [
+        [
+          {
+            "node": "Show Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Valid?": {
+      "main": [
+        [
+          {
+            "node": "Email Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Email Not Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Receipt": {
+      "main": [
+        [
+          {
+            "node": "Render Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Receipt": {
+      "main": [
+        [
+          {
+            "node": "Save to Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "3b8fea62-27e3-4b9c-b037-543d323f8358",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a66c1cc2acd418364d1c568006734cb83fd89ca40b9b59fba6cf14c5ee59e9ee"
+  },
+  "nodeGroups": [],
+  "id": "LKvgWmqL51YYqwwS",
+  "tags": []
+}

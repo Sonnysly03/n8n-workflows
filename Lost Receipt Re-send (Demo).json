@@ -1,0 +1,468 @@
+{
+  "name": "Lost Receipt Re-send (Demo)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Re-send a Lost Receipt",
+        "formDescription": "Enter the student's matric number and which payment they need. The saved receipt is emailed again, free of charge.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Matric Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Purpose",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Departmental Dues"
+                  },
+                  {
+                    "option": "Handbook"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Session",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2025/2026"
+                  },
+                  {
+                    "option": "2026/2027"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "path": "resend-receipt",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Request received. If a matching receipt exists, it will be emailed to the student shortly."
+            }
+          }
+        }
+      },
+      "id": "fdffaded-34a0-45f0-9ba8-8ee42a7dfb15",
+      "name": "Resend Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "2b0a223d-8e21-4f9a-9834-131d430ce87b"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $json['Matric Number'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b408f59c-0d7d-40b5-bef2-65f676d702e7",
+      "name": "Find Receipts",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $('Resend Form').first().json;\nconst rows = $input.all().map(function (i) { return i.json; }).filter(function (r) { return r['Receipt No']; });\nconst match = rows.filter(function (r) { return r['Purpose'] === form['Purpose'] && String(r['Session']) === String(form['Session']); });\nif (!match.length) {\n  return [{ json: { found: false, matric: form['Matric Number'], purpose: form['Purpose'], session: form['Session'] } }];\n}\nconst r = match[match.length - 1];\nconst today = $now.setZone('Africa/Lagos').toFormat('dd/MM/yyyy');\nreturn [{ json: { found: true, receiptNo: r['Receipt No'], date: r['Date'], name: r['Name'], matric: r['Matric No'], level: r['Level'], purpose: r['Purpose'], session: r['Session'], amount: r['Amount'], duplicateNote: 'DUPLICATE COPY issued ' + today + ' of the original dated ' + r['Date'] + '.' } }];"
+      },
+      "id": "f4e588e8-a8fa-40c3-a689-0912362b1f22",
+      "name": "Pick Receipt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.found }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "80e83c64-c352-4af6-a94f-007e72acd3bd",
+      "name": "Receipt Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Students"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $json.matric }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ae7c4fe8-0e0a-43d7-8427-78d2c4a8d403",
+      "name": "Student Email",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        -80
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Student Email').first().json.Email }}",
+        "subject": "=Copy of your receipt {{ $('Pick Receipt').first().json.receiptNo }}",
+        "emailType": "text",
+        "message": "=Dear {{ $('Pick Receipt').first().json.name }},\n\nAs requested, here is a copy of your receipt (No. {{ $('Pick Receipt').first().json.receiptNo }}) for {{ $('Pick Receipt').first().json.purpose }} ({{ $('Pick Receipt').first().json.session }}).\n\nThis copy is in the current official receipt format. It is free of charge.\n\nCollege of Medicine",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "receipt"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f13eae62-c5ea-447c-a594-fb1234f78b5f",
+      "name": "Email Copy",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -80
+      ],
+      "webhookId": "97167584-d37e-4e79-b54a-aeb5848a3c20",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sAGkvePvnEzVSi4M",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1grXJDIjrBV3GkLM-pNZwSKf1qhOADfVoFlqsdU84tsA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reissues"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.setZone('Africa/Lagos').toFormat('dd/MM/yyyy HH:mm') }}",
+            "Receipt No": "={{ $('Pick Receipt').first().json.receiptNo }}",
+            "Matric No": "={{ $('Pick Receipt').first().json.matric }}",
+            "Sent To": "={{ $('Student Email').first().json.Email }}"
+          },
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "Receipt No",
+              "displayName": "Receipt No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "Matric No",
+              "displayName": "Matric No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string"
+            },
+            {
+              "id": "Sent To",
+              "displayName": "Sent To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fda7951b-d7f5-4cca-85e9-8b2ed92fde1f",
+      "name": "Log Re-send",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1920,
+        -80
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MArI786eqAgKPr8h",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sylvesterchidera77@gmail.com",
+        "subject": "Re-send failed: no matching receipt found",
+        "emailType": "text",
+        "message": "=No saved receipt was found for matric number {{ $json.matric }} ({{ $json.purpose }}, {{ $json.session }}). The payment may pre-date this system. Please check the paper records and issue a manual duplicate if needed.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "478e8dc6-aed9-4096-a70a-0a654324ff9f",
+      "name": "Alert Office",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        128
+      ],
+      "webhookId": "8e938c83-cf7c-459e-b9ba-c16e8ac7ef73",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sAGkvePvnEzVSi4M",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $('Pick Receipt').first().json }];"
+      },
+      "id": "fd0d061d-6a66-4a46-82f8-45bb20f7859a",
+      "name": "Prepare Receipt Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "nOP4BgsXeKnclGvL"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "e1c0ae75-8c94-4de5-8cfd-9b3be005b483",
+      "name": "Render Receipt",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        -80
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Resend Form": {
+      "main": [
+        [
+          {
+            "node": "Find Receipts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Receipts": {
+      "main": [
+        [
+          {
+            "node": "Pick Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Receipt": {
+      "main": [
+        [
+          {
+            "node": "Receipt Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receipt Found?": {
+      "main": [
+        [
+          {
+            "node": "Student Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Office",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Copy": {
+      "main": [
+        [
+          {
+            "node": "Log Re-send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Receipt Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Receipt Data": {
+      "main": [
+        [
+          {
+            "node": "Render Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Receipt": {
+      "main": [
+        [
+          {
+            "node": "Email Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "bdfb529c-ca15-4444-bd61-fc35d5a642d5",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a66c1cc2acd418364d1c568006734cb83fd89ca40b9b59fba6cf14c5ee59e9ee"
+  },
+  "nodeGroups": [],
+  "id": "YiSju4UojNg31P3R",
+  "tags": []
+}
