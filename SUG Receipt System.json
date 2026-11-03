@@ -1,0 +1,1635 @@
+{
+  "name": "SUG Receipt System",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "SUG Dues Receipt",
+        "formDescription": "Enter the payment received. The receipt is generated and emailed to the student.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Matric Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Payment for",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "SUG Clearance"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Amount Paid",
+              "fieldType": "number"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Received. The receipt is being generated and will be emailed to the student."
+            }
+          }
+        }
+      },
+      "id": "b1ba3e6c-9106-4435-9086-793ed04fea86",
+      "name": "SUG Receipt Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "22111c5d-3a2a-42e2-b435-8d999cc62df2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Students",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $json[\"Matric Number\"] }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "afb49c4e-c8c4-4d04-95dc-0d15fe4ac299",
+      "name": "Find Student",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        272,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json[\"Matric No\"] }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9fdab1ad-34e9-4383-8355-96d3a10fa372",
+      "name": "Student Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        528,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 407447326,
+          "mode": "list",
+          "cachedResultName": "Fees",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit#gid=407447326"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Fee",
+              "lookupValue": "={{ $('SUG Receipt Form').item.json['Amount Paid'] }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "caf052b7-abc3-49cc-9061-5a2f172fa797",
+      "name": "Find Fee",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        784,
+        -96
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "c4aec615-d988-457c-9619-08a193c50c52",
+      "name": "Read Register",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        -96
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $('SUG Receipt Form').first().json;\nconst student = $('Find Student').first().json;\nconst fee = $('Find Fee').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r['Receipt No']);\nconst OFFICE = 'sylvesterchidera+008@gmail.com';\n\nconst matric = String(form['Matric Number'] || '').trim();\nconst paymentFor = String(form['Payment For'] || 'SUG Dues').trim();\n\nconst bad = r => [{ json: { ok: false, reason: r, officeEmail: OFFICE, matric, paymentFor } }];\n\n// Pulls from the flat fee column ('Fee') in your Google Sheet\nconst amount = Number(fee['Fee'] || fee['Amount']);\nif (!amount) return bad('No SUG fee is set in the Fees tab.');\n\n// Optional: Checks if this student already paid for this specific purpose\nconst dup = rows.find(r => \n  String(r['Matric No']).trim() === matric && \n  String(r['Purpose'] || r['Payment For'] || '').trim() === paymentFor\n);\nif (dup) return bad(`Already paid: receipt ${dup['Receipt No']} already exists for ${matric} (${paymentFor}). Use the re-resend form if the student lost it.`);\n\nlet max = 0;\nfor (const r of rows) {\n  const m = String(r['Receipt No']).match(/(\\d+)$/);\n  if (m) max = Math.max(max, parseInt(m[1], 10));\n}\n\nconst receiptNo = 'SUG-' + String(max + 1).padStart(6, '0');\nconst dateText = new Date().toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos' });\n\nconst email = String(student['Email'] || '').trim();\nconst valid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email);\n\nreturn [{\n  json: {\n    ok: true,\n    isResend: false,\n    receiptNo,\n    fileName: receiptNo + '.pdf',\n    dateText,\n    name: student['Name'],\n    matric,\n    level: student['Level'],\n    paymentFor,\n    purposeText: paymentFor,\n    amount,\n    duplicateNote: '',\n    to: email,\n    emailStatus: valid ? 'SENT' : 'INVALID EMAIL',\n    emailValid: valid,\n    officeEmail: OFFICE\n  }\n}];"
+      },
+      "id": "af0eaac6-f955-41b7-999c-91799e5abdfd",
+      "name": "Prepare Receipt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "080b029a-7adb-4f9d-899b-184365fc9345"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "75d74d1b-1538-4682-92ec-02a1bb6584b4",
+      "name": "Receipt OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1568,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const RAW = {\"sig\": \"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsO|Dg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdB|RkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01|T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09P|T09PT09PT09PT09PT0//wAARCABHAKoDASIAAhEBAxEB/8QA|HwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAA|AgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKB|kaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6|Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWG|h4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXG|x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QA|HwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREA|AgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEI|FEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5|OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOE|hYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPE|xcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oA|DAMBAAIRAxEAPwD06iikJwMngCgBskiRIzyMFVRkk9q5HXfH|ljYOIrHFzJ/FjgD2qp408XRxwyaXpwMk8o2u+OFHtWT4e8By|X8Pn6nJJCG5UL1I966KdOKXNMn0L+nfEZprxUu7ZY42IA2np|XoEbrIiupyGAIrzHxV4Kt9I037ZZTyNsOHDmu68LXIufD1o5|OSECn6ilVjC3NAab6mvRRRWAwooooAKKKKACiijNABRSUtAB|RRRQAUUUUAFFFFABWF4v1ZdJ0KaXP7yT5EHfJrcrzXUxceKP|GP8AZwlDWtux3FRwoBrSlG7u9kDKfg3QZtT1Nb67B2xtuO7v|XqwAAwBgVFa20NrCsUEaoqjHAqaipPnYkjC8ZRCXw3cg9gDX|P/Dq5eaKW1aRgsR3AV1mvW5udHuYh3TNcV8NlK6jdjsARn8a|0j/CYPc9GopKWucYUUlLQAUUVDcmQR/ujg55PtQBMa88+Imo|X1tqVpFa3ckSEcqhxz710fjDU5dM0QvBIEmchVY15ZPLd3t7|bi6kaRy45PvXTh6d3zMls9m0jd/ZVrvkMjGMEse9XaoaNDJb|6bFHIeQOPpV+ueW5SCiiikAUUUUAFFFFAGN4q1F9M0SaeIgS|Ywp9K5/4cae4guNTlzuuH49/Wk+J87LYW8StgOxyK3fBqBPC|9kB3TJrf4aWnUXU3aazqgyxAHqTXMeJfFyaFdiD7OZGIznNc|lc65qXiC4CR3QjR+FjFTCjKWvQLnZ+MtXWx0GUwSxmWQbVAY|VwvhjxXDokUu+2Mju2SR6UXXhDVEnRbltydzuziqp0ywErpG|25kByM+ldUIQUbbks7P/AIWFYtbq8VrO0n8S44H41UT4gXFw|SttpyFuwaQ1Fp81vbeErqdLdQ4XrxXFadPL/AGtFIJNhMgyT|25qY0oO+gXO9/wCEr8SKu99EiCdjlqhPjzVYc/adIjUD/aIq|bxPqurWD2a2t/H5bj5gEHNP8TyO+jI8k0buYwTgAdqlRi7XQ|yGP4jZGZNOIHsxrM8ReOJNRiSDTxJbrnLMDyayLi9jXSoEiZ|RIRzgVX8qwdEJlw56jFaxpQTvYVzU1fWP7TsLO1MryyIoDFv|WqmsQSWF3bzkcAKePas10UXGyBsnOBUuqPfRKtvdsTtGRmtF|G2wrns2j3sd9ptvPGSdyDOR3q/XF+CfEViNCSC7uo4pIOCGO|MitUeMdAwxbUYxt9jXnypy5nZFm/RXLL480Le4a5O0dCEPNZ|dx8SrRJ2WCyeSMfdYtgn8KFSm+gXR3tNZlVSzEADuTivOD46|1jU2aLStNYsehX5iKrW2ieLNbmZL+5ntozyfMJx+QqvYtfE7|Bc6i+8Z2qalHZWC/aGL7XYdBzXUA8Dg1z/hvwra6LES6LLOT|nzDz+XpXQ4qJuKdojRwfxOuIBBZQPzIXLceldhowQaPZiMAL|5K4H4VwfxQtz9qtZ+wXBrt/D88dxoVlJEQV8lRx7CtJr91EX|Ur6/4asNeVPtYdHj+68Zwa5qT4bRI+611GVcdNw5B/Cu/pKz|jVlHRMdjy/VfCWuWVpLcyakJUjGTmRs4/GuRiMrzCOMkyMcY|B61674yvbWHRJoZnHmOPlUda8m0q+TTr8XLQiQr0B4wa7aEp|Si2yGaup6Hqml6Ws11IqRSfwb+fyrBUsRuCnjuBXcadZaj4y|k86/dktF+4McD6V2dr4Z0m2svsqWiFSPmJHJpe3UNJbjtc8d|gg1DUf8AULLNt9ycVpWfh3XtTPlrFJheP3jYAr1vT9JstNUi|0gWPPU1cCBc7RjPWspYr+VBynlUXw41hyPNmtkH+8TVg/DS/|x8t9b5+hr0+io+s1B8qPOLb4aS9brUQD/wBM1NWx8NbdjmXU|52/4CK7yipdep3CyOGX4aacDzfXRHsAKmX4caODzNdH/AIGP|8K7Oil7afcLI5AfDzRAc5uD9XrSsPCWiWP3LJJG/vSDca3aK|TqTe7CxTtNLsrKRntbdIix52jFXMUUVDd9xhRRRQBzvjDQX1|vTtsLqssYJXPeuW8Ba9LZ3f9iXY+XeQh67T6UUV00veptPoS|elCmSyLEhZzwBmiiuZFHD/2TJ4g8RyXcj4tFI+Un+ldU+h6V|Iqq9jAQo4+QUUVpUk00kCRct7eG2j8uCNY09FGBU1FFZ7gFF|FFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAH/9k=\", \"logoL\": \"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsO|Dg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdB|RkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01|T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09P|T09PT09PT09PT09PT0//wAARCABLAFADASIAAhEBAxEB/8QA|HwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAA|AgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKB|kaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6|Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWG|h4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXG|x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QA|HwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREA|AgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEI|FEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5|OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOE|hYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPE|xcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oA|DAMBAAIRAxEAPwD06iikd1jRndgqqMkk4AFAC1jaz4o0jRTs|vLoGb/njEN7/AJCuX1fxVdazLPbaLOLPTYeJ9QbqfZPT+dYl|vFDbp5mnxx20b/evrv55Zj/sLUOWtkB1cnja5nUnS/D97On8|LykRg0i+LdbTHneF5jxk+VcBv6VzEke9ka7j1C7jLAb5J/KU|j1Ap66fbeRLKLa5UoNyi0vNzflRaYXR19j450eeZYLzz9Pnb|+G6TYM/73SumVldQyMGUjIIOQRXl7R301hvA/te0PD213Htu|EPfb61PpGrTaHb/bNLlkvdFBxcWj8y2Z749vampdwPSqKhs7|uC+tIrq1kWSGVdyMO4qaqAK4nx1eyX97aeGrSXYbj95dMD92|Mdvxrtq8pvbtpNT8VaooAeLFtGccgdKmbsgH2sdndHgxxaZa|N5VpA52rdSjux7isq/1Wa2upVVFkvejzn50h9Fj+laFwi2ak|KF/4l1gGiGz/AJaN1b3pnh3WNOs9LtoridVlM7STfMMn/ezT|UeXREu7Occmdi88zyserMx6+47UiqIyHhZ0Zf4kY8VtWsFiy|XOsaiC9vJcnyxF29iPSn/Z7DTtV0+9hl/wBFkkLeXKcZ9vpS|VRXsR7N7kVlq8161vZ3tzIk8bZtLwjDRN6H1BrUkmMErazCq|ieF/s+pwBcLIp43Y96wtc1Br6eVz5axvPviQMCVHpxW2481d|SlaVdk+nqzx9ye1VJXiON72N3wVM2m67f6CDm1Zftdrz91T1|A/MV3FeX6RJKvifwu6M2+S2ZZPdcHrXqFTB3RoFeVTWrDUfF|ulhf3sjefED3H3q9VrhvHdncabqFt4osFDGAeVdJ/eTPB/XH|5USV0Bl21k+toJ4VxDdWPllweBKOoP5V53dW7wTukyEMjFWB|7EV6CiLHAby2hlu/D924mkjjbD20nqPapvENjoepW8V+9yVe|chFmgG4N6bhT31JOD0rWbzSw6W/lyRvyySLuX61Bf39xqM3m|3bhm4AAGAPoK2n8JFptttqlhNlsDbLtJ/DtUtr4ZsllX7Tqk|bkqW2W48xmA64o5VuO5neHdJm1HUookjfk5Zv7orq9Qtbi3j|uIJUX7TfuLaBc5Pljqc+lX5V0nSLeGz0/wA6W6Zw6RQN88p/|2z2Wsi9uLw6r5WwS+ILv92iKf3dsh9Pf3onLSyElrc6DwjaL|eeKLi9jbNrpkIs4Tjq38R/z613lZvh7SItD0eGxi+ZlG6R+7|ueprSoSsrFBXnPi7U77xG91pmjx77CzYfanBwZmB5VfYV6Be|SeVZTynPyRs3HsK8c0IrJYWo003ovyZGmNtGX3c/KGpSvbQD|fs760u2tV0W/GlXNquxrG5GEf6+tJeWSRz+beaRd2Fycn7Rp|x8yNh67e1V7tLueJT4k8Lz8f8vECZ2+/HNV7e7srdtuleKru|zx/yznGR+RqfaW+JBYmhWISrNDqWHiBcGTTzuXHX60+BLJlk|Z7zUbgQjlLW22A59KkF9q+3K+KdOcA8FoxULatcRKftPjGFB|6W8QzT9pHoOxq263Fta7tO0yDTIgObm8kGT+B5rK1WVNVubM|6QxuNYt3B+2QrtiAHYnvUMQsdRlLWtlq2uz9zLkRg/yq5d2H|ig2siHSZLW324jjsnUkex9RSc5PZBY7Tw1rZ1i2mjuIvJvbR|/LuYxyA3qD6GtquQ8A2ph/tGRbeaGN3RQJUKsWUHcefrXX1a|21EHWmxxRxLtiRUX0UYFOopgFU7zStOvgReWNvPnu8YJ/Orl|FAGCfBfhonP9j2/6/wCNWrXw5olmc22lWiH18oE/rWpRQAiq|qjCgAegFLRRQAUUUUAf/2Q==\", \"logoR\": \"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsO|Dg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdB|RkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01|T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09P|T09PT09PT09PT09PT0//wAARCABQAFADASIAAhEBAxEB/8QA|HwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAA|AgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKB|kaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6|Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWG|h4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXG|x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QA|HwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREA|AgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEI|FEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5|OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOE|hYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPE|xcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oA|DAMBAAIRAxEAPwD06iisPxR4lt/DtosksMsssmREqj5WPoW7|UAblFYejeKdM1XTGvPPSAxLmaORsGM/1rn9X+JVpAXTSrSS7|28ec/wAkef5n9KBXRt+M/EH9gaYkiwtK87+WAr7SOOSKveHt|Xi1vSI76GJ4lYlSjnJBHvXk3iHXNQ19oFv5LdBFl1jjU4UHu|fWtTwr4ouPDto1q9kLu1L798T4YZHoaBc2p6xRWHoXivS9bb|yoJGiuP+eMw2sfp6/hWhqOq2GlxCS/uo4VPTceT+HWgouUVW|sLxb638+NGEZY7GPRx2Ye1WaACsbxXZ215oVyl9OIrZELu2B|kEcjmtmvN/ilqbPcWmkxE4T99L6H0H86BN2RxFtbRttkm+6e|VLHAI+vY1baSZ4HLSRxQtwzsuTIB0IWjzxcKJDEFhUAGKNAC|7ep9RV2009tUcShisY+8cYH5VMpKKuzOOuxmRtAVCoZ32Hgl|sAfSpIlLSM0U08LYOTJyrCujs7Sy+13Fo8au0QBG8c49alud|ItJlKqDGexB4/KuZ4uKdrGns2csgLbEmc5B/dSISAD7HtUN8|19qF7El5cvdTPhEeRs8VfvoJbR2hmEjwjnaG6+4qtJ5Kxyee|7q6gPEUABf0B+ldCakrohq257J4d0r+xtFt7EytK0a/MzHPJ|649q06x/CmpjVvD1rc5JcJskz13Dg/41sVZocZ4q8ctoWqtp|8NgJpBGH3vLtHPtXnetatPrWqSahdIkbkBQik4AFezahoWk6|lIZL7T7eeQjaXZPmx9a8n8ZaPFoviCS2tYzHbSRiSIE5x2P6|0GdROxRTalrbFdhJYsS2OP612OmxiPT4gOrfMa4tE8y0icRo|3lEjOBmuv0icT6fHtIOzg+1cmMT5FYqlYi1km1MWpoOYDtl9|0PrTNE1ManC5ZohKrHCKeSPWjxTLNDocvkAEyMEbjPB9KytH|055/DrPZKIr0OdsmcN9K5lGMqV5GyNjWrdZrEs2d6dCP5VyM|8eICCI1MbY2qST9TXTSG5tdB2anMDcE4JJyfzrnbj/j1kcj/|AFkgwR0aurC3UbGVQ6j4ea/ZaUbq21G8WCKQho9+cZ7/AEr0|qyv7O/jMlldQzqOpjcNivE/DuhSa/qRs0nEOELFyu7p7V6b4|Q8J/8I09y5vPtBnAHEe3GPxrpJg3Y6euH+JmitdWMWq28bPN|a/LJt5/d+uPY13Fcv478QroukmCIg3d0CkYK5AHcmmymro8u|svMjgZyjmCQYO1c4/wBqrthPc2UxljZGgUZaRuFb6VQ0+S4S|OVkhkkQKd0gjLhPr7U+CXMBdXhRW+8hGYye3HapklJWZnHQ3|7rUob6OKINHG6SLIyueoHvTbO/itJLhdmUkcuiowJB9M1iP5|KuZJreaFicMwG9WqOE2yMDAZHG7Odm0fnWP1aNrdC/aM0tUu|5rh/3ojiJGFBGQv/ANese5dGYIihQg5IGNxrQLId80kkI3jj|byh9ifWqdxqHnvEOWhiIJUgc/jWySirImWp6J8MtJa20+bUp|kw9zhY8/3R/9f+VdxVDQ7621LSLe6tE2RMuAnHyY4xxV+qLS|sgqrqWm2Wq2jWuoW6Twt/C3Y+oParVFAyvZ2NrY2q2tnBHDC|owEUcf8A165/VfA+mXszXFm8mnzv95oMbW+qniuoooA8f8Sa|VqXht7d7y4gvFlJVGCkEY9RTvDfh/VdbtJZrGe0trfzMMJFL|En6V6B4p8MW/iK1SNpjbyo+4SqgY/SrHhvRI9A0pbJJfObcW|aQrt3E+1KxPLqYel/D6xgdZtVna9kHPlhfLiH/AR1rT1zwfp|GsW4RoBbyoMJLAApX8OhrfoplGZ4e0S20DTVsrZncZ3O79Wb|1rToooA//9k=\", \"crest\": \"/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABQODxIPDRQSEBIX|FRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhl|bXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZT|fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8|fHx8fHx8fHx8fHx8fHz/wAARCAAwACwDASIAAhEBAxEB/8QA|HwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAA|AgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKB|kaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6|Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWG|h4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXG|x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QA|HwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREA|AgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEI|FEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5|OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOE|hYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPE|xcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oA|DAMBAAIRAxEAPwDqr69hsrczTthc4AAyWPoB3NYkt1fXrlXd|7dTyIICN4H+2/b8KZNK9/qckq4KwyeRbg9A38T/59Kddypao|I4iJAeQByG9Wb1+lAEI063c/NFbs3+3I8h/OnrayWpLWzyQY|5zBKXUfVGqk91cMcmVx7A4A/Kp7e/nQkybpEIwW2/Mv0b+lA|GvY6qWkSC82Bn/1cqfcl9vY+1a2RXN3MMcsbbv8AVyYEm3jr|92Qe+etaWj3jT2e25YCeFzFJ7kd/xGDQBi6ST9khP8eyY/8A|As80k2pxadeyearlXRAu0Z4AB9RUzRtY6hNbhc4c3EIP8an7|6/zpdT0ldUtVmtBygwuWyWH9COmKAK9tLb3ivMkYcu53Bjgq|M/8A6vzqtLrEEUL20bPtWRmBVcg5GPXp+FY8ljdQOUaJlPTp|ir+laFc3cys6FIweWYcUAbNtg6Y5YHPktj6BuM1kamtydRnM|BYAld2PXaM1v3bQQwrDgxrGoM2WztUc4OO5NW9Gtv9C8+eP9|7cOZSD/CD0H5AUAU9cmiuby3tlyvkOJJZ1GTEPQe5/lVtlyD|JD8qvxvhG9WH+0PX3rNW3uvtl4YIJvMadyCRhCOMZJ4I69Oa|e0FzbtvktZom7yWrblP4df0oAtKXHAmQgDp5uABj0IyPWnIT|nm5OTx+7JdzwOhIwPyqj/awjOG1EKfSWHB/UU5dSaf5Y7q4n|/wBm3hI/XFAEmq20T2QXaLdo2DxK53GVvRl6nNaFpqsE0OZn|S3lU4eORgCp/qKz4rS9Zt8dqsQz8zTS/vGHt1x+NZ9/p160y|lLSVzt+YnDc5PfvxigD/2Q==\"};\nconst IMG = {}; for (const k of Object.keys(RAW)) IMG[k] = RAW[k].split(\"|\").join(\"\");\nconst CKS = {\"sig\":[3016,12509714],\"logoL\":[2664,10962607],\"logoR\":[2700,11111857],\"crest\":[1656,6823831]};\nfunction ck(s){let t=0;for(let i=0;i<s.length;i++)t=(t+s.charCodeAt(i)*(i%97+1))%1000000007;return [s.length,t];}\nfor (const k of Object.keys(CKS)) { const c = ck(IMG[k]); if (c[0]!==CKS[k][0]||c[1]!==CKS[k][1]) throw new Error(\"Image data corrupted: \"+k); }\n\nconst W = 595.28, H = 419.53;\nconst WID = {\"F1\":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584],\"F2\":[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584],\"F3\":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584]};\n\nfunction tw(s, font, size){ const t=WID[font]; let w=0; for (const ch of s){ const c=ch.charCodeAt(0); w+= (c>=32&&c<=126)? t[c-32] : 556; } return w*size/1000; }\nfunction clean(s){ return String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\\x20-\\x7e]/g,'?'); }\nfunction esc(s){ return clean(s).replace(/\\\\/g,'\\\\\\\\').replace(/\\(/g,'\\\\(').replace(/\\)/g,'\\\\)'); }\nconst f2 = n => (Math.round(n*100)/100).toString();\n\nfunction words(n){\n  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];\n  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];\n  const below1000=x=>{let s='';if(x>=100){s+=ones[Math.floor(x/100)]+' Hundred';x%=100;if(x)s+=' and ';}if(x>=20){s+=tens[Math.floor(x/10)];if(x%10)s+='-'+ones[x%10];}else if(x>0)s+=ones[x];return s;};\n  if(n===0)return 'Zero';\n  const parts=[];const sc=[[1e9,'Billion'],[1e6,'Million'],[1e3,'Thousand']];\n  for(const [v,name] of sc){ if(n>=v){ parts.push(below1000(Math.floor(n/v))+' '+name); n%=v; } }\n  if(n>0){ const r=below1000(n); parts.push((parts.length&&n<100?'and ':'')+r); }\n  return parts.join(' ');\n}\n\nfunction makeQR(text){\n  const data=[...Buffer.from(text,'utf8')];\n  const SPEC={1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],6:[16,[[4,27]]]};\n  const ALIGN={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34]};\n  let v=0; for(let i=1;i<=6;i++){ const cap=SPEC[i][1].reduce((a,b)=>a+b[0]*b[1],0); if(data.length<=cap-2){v=i;break;} }\n  if(!v) throw new Error('QR text too long');\n  const [ecLen,groups]=SPEC[v]; const total=groups.reduce((a,b)=>a+b[0]*b[1],0);\n  const bits=[]; const put=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>>i)&1);};\n  put(4,4); put(data.length,8); data.forEach(b=>put(b,8));\n  const cap=total*8; put(0,Math.min(4,cap-bits.length)); while(bits.length%8)bits.push(0);\n  const cw=[]; for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=b*2+bits[i+j];cw.push(b);}\n  for(let p=0;cw.length<total;p++)cw.push(p%2?0x11:0xEC);\n  const exp=new Array(512),log=new Array(256);let x=1;for(let i=0;i<255;i++){exp[i]=x;log[x]=i;x<<=1;if(x&256)x^=0x11D;}for(let i=255;i<512;i++)exp[i]=exp[i-255];\n  const gmul=(a,b)=>a&&b?exp[log[a]+log[b]]:0;\n  let gen=[1];for(let i=0;i<ecLen;i++){const n=new Array(gen.length+1).fill(0);for(let j=0;j<gen.length;j++){n[j]^=gen[j];n[j+1]^=gmul(gen[j],exp[i]);}gen=n;}\n  const rs=d=>{const r=new Array(ecLen).fill(0);for(const b of d){const f=b^r[0];r.shift();r.push(0);for(let i=0;i<ecLen;i++)r[i]^=gmul(gen[i+1],f);}return r;};\n  const blocks=[];let pos=0;for(const [n,len] of groups)for(let i=0;i<n;i++){const d=cw.slice(pos,pos+len);pos+=len;blocks.push({d,e:rs(d)});}\n  const final=[];const maxd=Math.max(...blocks.map(b=>b.d.length));\n  for(let i=0;i<maxd;i++)for(const b of blocks)if(i<b.d.length)final.push(b.d[i]);\n  for(let i=0;i<ecLen;i++)for(const b of blocks)final.push(b.e[i]);\n  const N=17+4*v; const M=[],F=[];for(let i=0;i<N;i++){M.push(new Array(N).fill(0));F.push(new Array(N).fill(false));}\n  const setF=(r,c,val)=>{if(r<0||c<0||r>=N||c>=N)return;M[r][c]=val?1:0;F[r][c]=true;};\n  const finder=(r0,c0)=>{for(let dr=-1;dr<=7;dr++)for(let dc=-1;dc<=7;dc++){const r=r0+dr,c=c0+dc;const inside=dr>=0&&dr<=6&&dc>=0&&dc<=6;const on=inside&&(dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4));setF(r,c,on);}};\n  finder(0,0);finder(0,N-7);finder(N-7,0);\n  for(let i=8;i<N-8;i++){setF(6,i,i%2===0);setF(i,6,i%2===0);}\n  if(ALIGN[v]){const a=ALIGN[v];for(const r of a)for(const c of a){if((r===6&&c===6)||(r===6&&c===a[a.length-1])||(c===6&&r===a[a.length-1]))continue;for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++)setF(r+dr,c+dc,Math.max(Math.abs(dr),Math.abs(dc))!==1);}}\n  const fd=(0<<3)|0;let rem=fd;for(let i=0;i<10;i++)rem=(rem<<1)^((rem>>>9)*0x537);\n  const fbits=((fd<<10)|rem)^0x5412; const gb=i=>((fbits>>>i)&1)===1;\n  for(let i=0;i<=5;i++)setF(i,8,gb(i));setF(7,8,gb(6));setF(8,8,gb(7));setF(8,7,gb(8));for(let i=9;i<15;i++)setF(8,14-i,gb(i));\n  for(let i=0;i<8;i++)setF(8,N-1-i,gb(i));for(let i=8;i<15;i++)setF(N-15+i,8,gb(i));setF(N-8,8,true);\n  let bi=0;const tb=final.length*8;\n  for(let right=N-1;right>=1;right-=2){if(right===6)right=5;for(let vert=0;vert<N;vert++){for(let j=0;j<2;j++){const c=right-j;const up=((right+1)&2)===0;const r=up?N-1-vert:vert;if(!F[r][c]){let bit=0;if(bi<tb){bit=(final[bi>>3]>>>(7-(bi&7)))&1;bi++;}M[r][c]=bit^(((r+c)%2===0)?1:0);}}}}\n  return {N,M};\n}\n\nfunction jpegInfo(b64, name){\n  const buf = Buffer.from(b64, 'base64');\n  let i = 2;\n  while(i + 8 < buf.length){\n    if(buf[i] !== 0xFF){ i++; continue; }\n    const m = buf[i+1];\n    if(m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return { buf, h: buf.readUInt16BE(i+5), w: buf.readUInt16BE(i+7) };\n    i += 2 + buf.readUInt16BE(i+2);\n  }\n  throw new Error('Bad image: ' + name);\n}\n\nfunction buildPdf(d){\n  const L=[]; const out=s=>L.push(s);\n  const col=(r,g,b)=>f2(r)+' '+f2(g)+' '+f2(b);\n  const RED=[0.78,0.16,0.14], INK=[0.07,0.09,0.36], BLK=[0,0,0];\n  const T=(x,y,s,font,size,c,align)=>{ const w=tw(clean(s),font,size); let xx=x; if(align==='c')xx=x-w/2; else if(align==='r')xx=x-w; out('BT /'+font+' '+f2(size)+' Tf '+col(...(c||BLK))+' rg '+f2(xx)+' '+f2(H-y)+' Td ('+esc(s)+') Tj ET'); return w; };\n  const RECT=(x,y,w,h,mode)=>out(f2(x)+' '+f2(H-y-h)+' '+f2(w)+' '+f2(h)+' re '+mode);\n  const IMG_=(name,x,y,w,h)=>out('q '+f2(w)+' 0 0 '+f2(h)+' '+f2(x)+' '+f2(H-y-h)+' cm /'+name+' Do Q');\n  const fit=(s,font,size,maxW)=>{let z=size;while(z>7&&tw(clean(s),font,z)>maxW)z-=0.5;return z;};\n  const DOTS=(x1,x2,y)=>out('q [0.8 2.6] 0 d 0.7 w 0.25 0.25 0.25 RG '+f2(x1)+' '+f2(H-y)+' m '+f2(x2)+' '+f2(H-y)+' l S Q');\n\n  out('q 10 10 '+f2(W-20)+' '+f2(H-20)+' re W n');\n  const unit='STUDENT UNION GOVERNMENT  ', uw=tw(unit,'F2',8.5);\n  for(let row=0,y=18;y<H;row++,y+=10.6){ let x=-(row%2?uw/2:0)-(row*13%uw); let s=''; while(x<W){ out('BT /F2 8.5 Tf 0.94 0.87 0.85 rg '+f2(x)+' '+f2(H-y)+' Td ('+unit+') Tj ET'); x+=uw; } }\n  out('Q');\n  const BX=34,BY=128,BW=527,BH=246;\n  out('q /GSw gs 1 1 1 rg'); RECT(96,16,W-192,84,'f'); RECT(12,BY+BH+2,W-24,H-12-BY-BH-2,'f'); out('Q');\n  out('q /GSw gs 1 1 1 rg'); RECT(BX,BY,BW,BH,'f'); out('Q');\n  out('q /GSm gs'); IMG_('Crest',W/2-95,BY+BH/2-103,190,206); out('Q');\n  out('q 1.6 w 0.1 0.1 0.1 RG'); RECT(10,10,W-20,H-20,'S'); out('Q');\n  IMG_('LogoL',30,24,60,56); IMG_('LogoR',W-30-60,22,60,60);\n  T(W/2,56,'STUDENT UNION GOVERNMENT','F2',23.5,BLK,'c');\n  T(W/2,73,'FEDERAL UNIVERSITY OF TECHNOLOGY, OWERRI','F2',11.5,BLK,'c');\n  T(W/2,88,'P.M.B 1526 IMO STATE','F1',10.5,BLK,'c');\n  out('q '+col(...RED)+' rg'); RECT(BX,100,122,25,'f'); out('Q');\n  T(BX+61,118,'CASH RECEIPT','F2',13,[1,1,1],'c');\n  T(BX+BW,118,'No. '+d.receiptNo,'F2',16,[0.1,0.1,0.1],'r');\n  out('q 1.6 w 0.1 0.1 0.1 RG'); RECT(BX,BY,BW,BH,'S'); out('Q');\n  const LX=BX+10, RX=BX+BW-10;\n  T(RX-150,152,'Date:','F2',12.5,BLK,'l'); T(RX-108,152,d.dateText,'F3',13.5,INK,'l'); DOTS(RX-108,RX,155);\n  const l1=T(LX,182,'Received from:','F2',12.5,BLK,'l'); DOTS(LX+l1+4,RX,185); {const nm=d.name.toUpperCase();T(LX+l1+10,181,nm,'F3',fit(nm,'F3',14,RX-LX-l1-14),INK,'l');}\n  const l2=T(LX,210,'The sum of:','F2',12.5,BLK,'l'); DOTS(LX+l2+4,RX,213); {const aw=d.amountWords+' Naira Only';T(LX+l2+10,209,aw,'F3',fit(aw,'F3',13.5,RX-LX-l2-14),INK,'l');}\n  DOTS(LX,LX+210,239); T(LX+105,236,d.amountFig,'F3',13.5,INK,'c'); T(LX+216,239,'Naira','F2',12.5,BLK,'l');\n  DOTS(LX+262,RX-48,239); T(LX+262+(RX-48-LX-262)/2,236,'00','F3',13.5,INK,'c'); T(RX-44,239,'Kobo','F2',12.5,BLK,'l');\n  const l3=T(LX,267,'Payment for:','F2',12.5,BLK,'l'); DOTS(LX+l3+4,RX,270); T(LX+l3+10,266,d.purposeText,'F3',fit(d.purposeText,'F3',13.5,RX-LX-l3-14),INK,'l');\n  const l4=T(LX,295,'Matric No:','F2',12.5,BLK,'l'); DOTS(LX+l4+4,LX+250,298); T(LX+l4+10,294,d.matric,'F3',13,INK,'l');\n  T(LX+262,295,'Level:','F2',12.5,BLK,'l'); DOTS(LX+262+44,LX+262+120,298); T(LX+262+50,294,d.level,'F3',13,INK,'l');\n  out('q '+col(...RED)+' rg'); RECT(LX,316,176,28,'f'); out('Q');\n  T(LX+88,336,'N '+d.amountFig+' : 00 K','F2',15,[1,1,1],'c');\n  const qr=makeQR(d.verifyUrl), q=qr.N, qs=64, qm=qs/(q+0); const QX=LX+210, QY=304;\n  out('q 1 1 1 rg'); RECT(QX-4,QY-4,qs+8,qs+8,'f'); out('0 0 0 rg');\n  for(let r=0;r<q;r++)for(let c=0;c<q;c++)if(qr.M[r][c])out(f2(QX+c*qm)+' '+f2(H-(QY+(r+1)*qm))+' '+f2(qm+0.15)+' '+f2(qm+0.15)+' re f');\n  out('Q');\n  T(QX+qs/2,383,'Scan to verify','F2',7.5,[0.25,0.25,0.25],'c');\n  out('q /GSx gs'); IMG_('Sig',RX-150,306,128,54); out('Q');\n  out('q 0.8 w 0.2 0.2 0.2 RG '+f2(RX-170)+' '+f2(H-352)+' m '+f2(RX)+' '+f2(H-352)+' l S Q');\n  T(RX-85,367,'Financial Secretary','F2',12,BLK,'c');\n  if(d.duplicateNote){ T(W/2,394,d.duplicateNote,'F2',8.5,RED,'c'); T(W/2,405,'This is a re-issued copy. The receipt number is unchanged. Verify it using the QR code above.','F1',7.5,[0.3,0.3,0.3],'c'); }\n  else T(W/2,399,'Issued electronically by the Student Union Government. Scan the QR code to confirm this receipt is genuine.','F1',7.5,[0.3,0.3,0.3],'c');\n\n  const content=Buffer.from(L.join('\\n'),'latin1');\n  const imgs={ LogoL: jpegInfo(IMG.logoL,'LogoL'), LogoR: jpegInfo(IMG.logoR,'LogoR'), Crest: jpegInfo(IMG.crest,'Crest'), Sig: jpegInfo(IMG.sig,'Sig') };\n\n  const objs=[]; const add=b=>{objs.push(b);return objs.length;};\n  const catalog=add(null), pages=add(null), page=add(null), cont=add(null);\n  const fonts={F1:'Helvetica',F2:'Helvetica-Bold',F3:'Helvetica-Oblique'}; const fid={};\n  for(const k of Object.keys(fonts))fid[k]=add(Buffer.from('<< /Type /Font /Subtype /Type1 /BaseFont /'+fonts[k]+' /Encoding /WinAnsiEncoding >>'));\n  const gs=add(Buffer.from('<< /Type /ExtGState /ca 0.62 >>')), gm=add(Buffer.from('<< /Type /ExtGState /ca 0.13 /BM /Multiply >>')), gx=add(Buffer.from('<< /Type /ExtGState /BM /Multiply >>'));\n  const iid={}; for(const k of Object.keys(imgs)){ const im=imgs[k]; iid[k]=add(Buffer.concat([Buffer.from('<< /Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+im.buf.length+' >>\\nstream\\n'),im.buf,Buffer.from('\\nendstream')])); }\n  objs[catalog-1]=Buffer.from('<< /Type /Catalog /Pages '+pages+' 0 R >>');\n  objs[pages-1]=Buffer.from('<< /Type /Pages /Kids ['+page+' 0 R] /Count 1 >>');\n  objs[page-1]=Buffer.from('<< /Type /Page /Parent '+pages+' 0 R /MediaBox [0 0 '+f2(W)+' '+f2(H)+'] /Contents '+cont+' 0 R /Resources << /Font << '+Object.keys(fid).map(k=>'/'+k+' '+fid[k]+' 0 R').join(' ')+' >> /ExtGState << /GSw '+gs+' 0 R /GSm '+gm+' 0 R /GSx '+gx+' 0 R >> /XObject << '+Object.keys(iid).map(k=>'/'+k+' '+iid[k]+' 0 R').join(' ')+' >> >> >>');\n  objs[cont-1]=Buffer.concat([Buffer.from('<< /Length '+content.length+' >>\\nstream\\n'),content,Buffer.from('\\nendstream')]);\n  const chunks=[Buffer.from('%PDF-1.4\\n%\\xE2\\xE3\\xCF\\xD3\\n','latin1')]; let off=chunks[0].length; const offs=[];\n  objs.forEach((o,i)=>{ offs.push(off); const b=Buffer.concat([Buffer.from((i+1)+' 0 obj\\n'),o,Buffer.from('\\nendobj\\n')]); chunks.push(b); off+=b.length; });\n  let xr='xref\\n0 '+(objs.length+1)+'\\n0000000000 65535 f \\n'; offs.forEach(o=>{xr+=String(o).padStart(10,'0')+' 00000 n \\n';});\n  chunks.push(Buffer.from(xr+'trailer\\n<< /Size '+(objs.length+1)+' /Root '+catalog+' 0 R >>\\nstartxref\\n'+off+'\\n%%EOF'));\n  return Buffer.concat(chunks);\n}\n\nconst VERIFY_BASE='https://dungeonexperimentsly.app.n8n.cloud/webhook/verify-sug-receipt';\nconst out=[];\nfor(const item of $input.all()){\n  const d=Object.assign({},item.json);\n  d.amountFig=Number(d.amount).toLocaleString('en-US');\n  d.amountWords=words(Number(d.amount));\n  d.verifyUrl=VERIFY_BASE+'?r='+encodeURIComponent(d.receiptNo);\n  const buf=buildPdf(d);\n  const bin=await this.helpers.prepareBinaryData(buf,d.fileName,'application/pdf');\n  out.push({json:d,binary:{receipt:bin}});\n}\nreturn out;"
+      },
+      "id": "84d85303-b4b6-456f-99e5-6f58b023df83",
+      "name": "Build PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "chiderasylvester956@gmail.com",
+        "subject": "SUG receipt could not be issued",
+        "emailType": "text",
+        "message": "={{ $json.reason }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "ffa66ee8-fceb-479f-8a72-2d6b6a1f8d6f",
+      "name": "Alert: Cannot Issue Receipt",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        112
+      ],
+      "webhookId": "eb050f7b-d3a8-4253-995d-2db2aeb26a25",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Vqt8oN3w86wvPWup",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sylvesterchidera77+008@gmail.com",
+        "subject": "SUG receipt: student not found",
+        "emailType": "text",
+        "message": "=No student with matric number {{ $(\"SUG Receipt Form\").item.json[\"Matric Number\"] }} was found in the Students tab. No receipt was issued. Add the student to the sheet, then submit the form again.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c0be0dd0-a04c-4176-80df-d6c85d02ebcf",
+      "name": "Alert: Student Not Found",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        208
+      ],
+      "webhookId": "7f6abdae-0ffa-4b88-ae09-ff2183e70384",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Vqt8oN3w86wvPWup",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Re-send a Lost SUG Receipt",
+        "formDescription": "Enter the matric number and session. The receipt is regenerated in the latest design and emailed to the student.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Matric Number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Session Paid For",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2022/2023"
+                  },
+                  {
+                    "option": "2023/2024"
+                  },
+                  {
+                    "option": "2024/2025"
+                  },
+                  {
+                    "option": "2025/2026"
+                  },
+                  {
+                    "option": "2026/2027"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Received. The copy is being generated and will be emailed to the student."
+            }
+          }
+        }
+      },
+      "id": "a59dbc11-f03c-4b25-bd00-52503ba5fd48",
+      "name": "Re-send Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        608
+      ],
+      "webhookId": "139b844d-2ba7-4bb8-a0c0-f7cb9453b25e"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $json[\"Matric Number\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "955b4fa4-52c2-4588-9d85-b09004897a3e",
+      "name": "Find Receipts",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        272,
+        608
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Matric No",
+              "lookupValue": "={{ $(\"Re-send Form\").item.json[\"Matric Number\"] }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "797decef-683b-4182-9605-d81457eb8c00",
+      "name": "Find Student (Re-send)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        608
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const form=$('Re-send Form').first().json;\nconst OFFICE='sylvesterchidera+008@gmail.com';\nconst matric=String(form['Matric Number']||'').trim();\nconst session=String(form['Session Paid For']||'').trim();\nconst bad=r=>[{json:{ok:false,reason:r,officeEmail:OFFICE,matric,session}}];\nconst row=$('Find Receipts').all().map(i=>i.json).find(r=>r['Receipt No']&&String(r['Session Paid']).trim()===session);\nif(!row)return bad('No saved SUG receipt found for '+matric+' ('+session+'). Check the Register tab, or issue a manual duplicate.');\nconst student=$input.first().json;\nconst email=String(student['Email']||'').trim();\nconst valid=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email);\nif(!valid)return bad('The email on file for '+matric+' is missing or invalid ('+email+'). Fix it in the Students tab, then try again.');\nconst today=new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Lagos'});\nreturn [{json:{ok:true,isResend:true,receiptNo:row['Receipt No'],fileName:row['Receipt No']+'.pdf',dateText:String(row['Date']),name:row['Name'],matric:String(row['Matric No']),level:row['Level'],sessionPaid:session,purposeText:'SUG Dues - '+session+' Session',amount:Number(row['Amount']),duplicateNote:'DUPLICATE COPY issued '+today+' of the original dated '+row['Date']+'.',to:email,emailStatus:'SENT',emailValid:true,officeEmail:OFFICE,issuedOn:today}}];"
+      },
+      "id": "5266d851-d06b-4a6c-aae6-7ad5379a595d",
+      "name": "Prepare Re-send",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "96faaef7-ad53-448b-91e1-f9b3a807400c",
+      "name": "Re-send OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1040,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isResend }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d1957472-619b-4a78-b5ab-9677eb224d00",
+      "name": "New Receipt?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2080,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "receipt",
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1HdUipiywngNLUg92pIdCP3KS4X9i6rwa",
+          "mode": "list",
+          "cachedResultName": "SUG",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1HdUipiywngNLUg92pIdCP3KS4X9i6rwa"
+        },
+        "options": {}
+      },
+      "id": "311852f3-73b2-4b60-8316-cee50933b0c0",
+      "name": "Save to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2352,
+        -400
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "xasdXubjilTDUwFI",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "kind",
+              "displayName": "kind",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mimeType",
+              "displayName": "mimeType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "starred",
+              "displayName": "starred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "trashed",
+              "displayName": "trashed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "explicitlyTrashed",
+              "displayName": "explicitlyTrashed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "parents",
+              "displayName": "parents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "spaces",
+              "displayName": "spaces",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "version",
+              "displayName": "version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "webContentLink",
+              "displayName": "webContentLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "webViewLink",
+              "displayName": "webViewLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "iconLink",
+              "displayName": "iconLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hasThumbnail",
+              "displayName": "hasThumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "thumbnailVersion",
+              "displayName": "thumbnailVersion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "viewedByMe",
+              "displayName": "viewedByMe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "createdTime",
+              "displayName": "createdTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "modifiedTime",
+              "displayName": "modifiedTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "modifiedByMeTime",
+              "displayName": "modifiedByMeTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "modifiedByMe",
+              "displayName": "modifiedByMe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "owners",
+              "displayName": "owners",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lastModifyingUser",
+              "displayName": "lastModifyingUser",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "shared",
+              "displayName": "shared",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ownedByMe",
+              "displayName": "ownedByMe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "downloadRestrictions",
+              "displayName": "downloadRestrictions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "capabilities",
+              "displayName": "capabilities",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "viewersCanCopyContent",
+              "displayName": "viewersCanCopyContent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "copyRequiresWriterPermission",
+              "displayName": "copyRequiresWriterPermission",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "writersCanShare",
+              "displayName": "writersCanShare",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "permissions",
+              "displayName": "permissions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "permissionIds",
+              "displayName": "permissionIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "originalFilename",
+              "displayName": "originalFilename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fullFileExtension",
+              "displayName": "fullFileExtension",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fileExtension",
+              "displayName": "fileExtension",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "md5Checksum",
+              "displayName": "md5Checksum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sha1Checksum",
+              "displayName": "sha1Checksum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sha256Checksum",
+              "displayName": "sha256Checksum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "size",
+              "displayName": "size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "quotaBytesUsed",
+              "displayName": "quotaBytesUsed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "headRevisionId",
+              "displayName": "headRevisionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "isAppAuthorized",
+              "displayName": "isAppAuthorized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "clientEncryptionDetails",
+              "displayName": "clientEncryptionDetails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkShareMetadata",
+              "displayName": "linkShareMetadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "inheritedPermissionsDisabled",
+              "displayName": "inheritedPermissionsDisabled",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "44526273-baa8-45a6-a8ee-4d3d1a56564d",
+      "name": "Log in Register",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2608,
+        -400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.emailValid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cd97414d-6a24-4ee8-9d32-b423df2286b2",
+      "name": "Email Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2080,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.isResend ? \"Duplicate copy of your SUG receipt \" : \"Your SUG Dues receipt \" }}{{ $json.receiptNo }}",
+        "message": "=<p>Dear {{ $json.name }},</p><p>{{ $json.isResend ? \"As requested, here is a fresh copy of your SUG Dues receipt.\" : \"Thank you for your payment. Your SUG Dues receipt is attached.\" }}</p><p><b>Receipt No:</b> {{ $json.receiptNo }}<br><b>Session:</b> {{ $json.sessionPaid }}<br><b>Amount:</b> N{{ Number($json.amount).toLocaleString(\"en-US\") }}</p><p>You can confirm it is genuine by scanning the QR code on the receipt.</p><p>Student Union Government, FUTO</p>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "receipt"
+              }
+            ]
+          }
+        }
+      },
+      "id": "8dc9b120-467a-4b49-b5d2-1fc610031003",
+      "name": "Email Receipt",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        -208
+      ],
+      "webhookId": "35981eda-2441-4bf1-963e-c9a496be8cef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Vqt8oN3w86wvPWup",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.officeEmail }}",
+        "subject": "SUG receipt: email not sent",
+        "emailType": "text",
+        "message": "=Receipt {{ $json.receiptNo }} for matric {{ $json.matric }} was saved but could not be emailed because the student email is missing or invalid. Fix it in the Students tab, then use the re-send form.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "30873c1f-e4ff-4096-9b93-e47b5fb5b888",
+      "name": "Alert: Email Not Sent",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        0
+      ],
+      "webhookId": "53084bde-3f9c-46e8-8c88-f25b053b00bd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Vqt8oN3w86wvPWup",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isResend }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a7d44d1c-4f3e-46a7-8d4b-cc88a18064eb",
+      "name": "Re-send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2080,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reissues"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.issuedOn }}",
+            "Receipt No": "={{ $json.receiptNo }}",
+            "Matric No": "={{ $json.matric }}",
+            "Sent To": "={{ $json.to }}"
+          },
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Receipt No",
+              "displayName": "Receipt No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Matric No",
+              "displayName": "Matric No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sent To",
+              "displayName": "Sent To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "65389851-b679-4334-9ac2-29fdc0540f42",
+      "name": "Log Re-send",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2368,
+        192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "verify-sug-receipt",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "37624801-3f60-47a3-8b42-be2f4b4965c9",
+      "name": "Verify Link",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        1008
+      ],
+      "webhookId": "c674c753-5789-4c27-a391-968beab17c2e"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4",
+          "mode": "list",
+          "cachedResultName": "SUG students data base",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17NB6WGNlV6CI_PpObnZniG7b4Plc9Y4gaLEwUItsHF4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Register"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Receipt No",
+              "lookupValue": "={{ $json.query.r }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "fcdc780e-9e15-4903-bf17-feb387fda30c",
+      "name": "Lookup Receipt",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        272,
+        1008
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "X7WGcOTsRZCCmJxo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const q=$('Verify Link').first().json.query||{};\nconst no=String(q.r||'').trim();\nconst r=$input.first().json||{};\nconst ok=!!r['Receipt No']&&String(r['Receipt No'])===no;\nconst esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));\nconst m=String(r['Matric No']||'');\nconst masked=m.length>6?m.slice(0,3)+'*'.repeat(m.length-6)+m.slice(-3):m;\nconst row=(k,v)=>'<tr><td style=\"padding:6px 10px;color:#666'+';\">'+k+'</td><td style=\"padding:6px 10px;font-weight:600;\">'+esc(v)+'</td></tr>';\nconst head='<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Verify SUG Receipt</title></head><body style=\"font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:24px;\">';\nlet body;\nif(ok){\nbody='<div style=\"max-width:460px;margin:auto;background:#fff;border-radius:10px;padding:24px;border-top:6px solid #1a8a3c;\"><h2 style=\"margin:0 0 4px;color:#1a8a3c;\">Genuine receipt</h2><p style=\"margin:0 0 14px;color:#555;\">Issued by the Student Union Government, FUTO.</p><table style=\"width:100%;border-collapse:collapse;font-size:15px;\">'+row('Receipt No',r['Receipt No'])+row('Name',r['Name'])+row('Matric No',masked)+row('Level',r['Level'])+row('Session',r['Session Paid'])+row('Amount','N '+Number(r['Amount']).toLocaleString('en-US'))+row('Date',r['Date'])+'</table></div>';\n}else{\nbody='<div style=\"max-width:460px;margin:auto;background:#fff;border-radius:10px;padding:24px;border-top:6px solid #c62828;\"><h2 style=\"margin:0 0 4px;color:#c62828;\">Receipt not found</h2><p style=\"color:#555;\">No receipt with number '+esc(no)+' exists in the SUG register. Please contact the SUG office.</p></div>';\n}\nreturn [{json:{html:head+body+'</body></html>'}}];"
+      },
+      "id": "af4ecd24-11c5-4c8c-8693-e58cbdc4610c",
+      "name": "Build Verify Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f32d510e-2b69-4f12-9965-766fffd92bc8",
+      "name": "Show Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        784,
+        1008
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "SUG Receipt Form": {
+      "main": [
+        [
+          {
+            "node": "Find Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Student": {
+      "main": [
+        [
+          {
+            "node": "Student Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Found?": {
+      "main": [
+        [
+          {
+            "node": "Find Fee",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Student Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Fee": {
+      "main": [
+        [
+          {
+            "node": "Read Register",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Register": {
+      "main": [
+        [
+          {
+            "node": "Prepare Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Receipt": {
+      "main": [
+        [
+          {
+            "node": "Receipt OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receipt OK?": {
+      "main": [
+        [
+          {
+            "node": "Build PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Cannot Issue Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF": {
+      "main": [
+        [
+          {
+            "node": "New Receipt?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Valid?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Re-send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-send Form": {
+      "main": [
+        [
+          {
+            "node": "Find Receipts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Receipts": {
+      "main": [
+        [
+          {
+            "node": "Find Student (Re-send)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Student (Re-send)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Re-send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Re-send": {
+      "main": [
+        [
+          {
+            "node": "Re-send OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-send OK?": {
+      "main": [
+        [
+          {
+            "node": "Build PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Cannot Issue Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Receipt?": {
+      "main": [
+        [
+          {
+            "node": "Save to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Drive": {
+      "main": [
+        [
+          {
+            "node": "Log in Register",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Valid?": {
+      "main": [
+        [
+          {
+            "node": "Email Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Email Not Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-send?": {
+      "main": [
+        [
+          {
+            "node": "Log Re-send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Link": {
+      "main": [
+        [
+          {
+            "node": "Lookup Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Receipt": {
+      "main": [
+        [
+          {
+            "node": "Build Verify Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Verify Page": {
+      "main": [
+        [
+          {
+            "node": "Show Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "137b3077-68da-418b-ac63-a06d6ce2ef78",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2b46ef7ecde37a7f14106f50082a2849db8eb532faf3a814111a2cdbbe0834c3"
+  },
+  "nodeGroups": [],
+  "id": "1aMewiWXgmDnC9ND",
+  "tags": []
+}
