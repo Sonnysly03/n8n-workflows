@@ -1,0 +1,99 @@
+{
+  "name": "Market News Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "id": "9ed5c834-a605-41a6-9e1f-c3306c52852c",
+      "name": "Tool Input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://news.google.com/rss/search?q={{ encodeURIComponent(String($json.query || \"stock market today\") + \" when:3d\") }}&hl=en-US&gl=US&ceid=US:en",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "xml"
+            }
+          }
+        }
+      },
+      "id": "9f3d28f4-d2d6-43e1-a80d-90d8baabe769",
+      "name": "Get News Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = String($('Tool Input').first().json.query || '');\nconst xml = String($input.first().json.xml || $input.first().json.data || '');\nconst grab = (s, tag) => {\n  const a = s.indexOf('<' + tag + '>');\n  if (a < 0) return '';\n  const b = s.indexOf('</' + tag + '>', a);\n  if (b < 0) return '';\n  return s.slice(a + tag.length + 2, b);\n};\nconst dec = (v) => v.split('&amp;').join('&').split('&lt;').join('<').split('&gt;').join('>').split('&quot;').join('\"').split('&#39;').join(\"'\");\nconst parts = xml.split('<item>').slice(1, 9);\nconst headlines = parts.map(p => ({ headline: dec(grab(p, 'title')), published: grab(p, 'pubDate') }));\nif (!headlines.length) {\n  return [{ json: { found: false, query, note: 'No recent headlines found for this query.' } }];\n}\nreturn [{ json: { found: true, query, retrievedAt: new Date().toISOString(), headlines } }];"
+      },
+      "id": "fda0c145-1f57-4aac-8cdd-93a5accf5947",
+      "name": "Parse News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tool Input": {
+      "main": [
+        [
+          {
+            "node": "Get News Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get News Feed": {
+      "main": [
+        [
+          {
+            "node": "Parse News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "9f18fa7b-1552-4611-b239-8d5b2899fa12",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "2b46ef7ecde37a7f14106f50082a2849db8eb532faf3a814111a2cdbbe0834c3"
+  },
+  "nodeGroups": [],
+  "id": "AgftWnOzxcIPT2c1",
+  "tags": []
+}

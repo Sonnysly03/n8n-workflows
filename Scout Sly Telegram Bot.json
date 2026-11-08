@@ -1,0 +1,592 @@
+{
+  "name": "Scout Sly Telegram Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "f2bd886d-bec0-46f9-9f4d-30732b21fc7e",
+      "name": "Telegram Message",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "f05d1c11-65f9-4cce-884c-425f2ff62267",
+      "credentials": {
+        "telegramApi": {
+          "id": "8QBmU9ePgp75L6UK",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.message.text }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "53e3fb58-31bd-497f-b6ed-092f9f150739",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are Scout Sly, a sharp, friendly stock-market companion chatting on Telegram. Today is {{ $now.toFormat(\"yyyy-MM-dd\") }}. Chat naturally, remember what was said earlier in the conversation, and use it for follow-ups like \"what about its 5 year chart?\" or \"compare it with Tesla\".\n\nGREETING\nSimple greetings (hi, hello, /start) are handled before they reach you. If the user asks who you are or what you can do, say you are Scout Sly, who can analyze and compare stocks worldwide including the Nigerian Exchange, show price charts, give live market headlines, and remember the conversation. Keep it to two or three sentences.\n\nRULES\n1. For any question about a stock price, trend, risk, or whether to buy, call the get_stock_analysis tool first. Never invent prices or numbers. Turn company names into tickers (Apple = AAPL, Tesla = TSLA, Tesco = TSCO.L, Toyota = 7203.T, Tencent = 0700.HK, SAP = SAP.DE). NIGERIAN stocks (Nigerian Exchange, NGX) use the NGX symbol plus .NG, for example Dangote Cement = DANGCEM.NG, Dangote Sugar = DANGSUGAR.NG, GTCO = GTCO.NG, Zenith Bank = ZENITHBANK.NG, MTN Nigeria = MTNN.NG, Access = ACCESSCORP.NG. To compare stocks, call the tool once per stock. If the tool says nothing was found, say so and ask for the exact ticker.\n   For .NG stocks the result has limitedData true: it is only a snapshot (current price, 52-week range, and 7-day, 1-month, year-to-date and 1-year changes), with no price history, volatility or chart. Say that clearly, treat the rating as lower confidence, and do not offer a chart for .NG stocks.\n2. For news and live updates (what is happening in the markets, why a stock or index moved, a company or sector in the news, earnings, central banks, IPOs), call the get_market_news tool with a short search query. Summarise the 3 to 5 most relevant headlines in your own words, with how recent each is (for example today, yesterday, 2 days ago, using the dates returned). Use only what the tool returned, never add events or numbers from memory, and if it returns nothing useful say so. These are headlines from public news feeds, so say you have not verified the details. You may combine news with get_stock_analysis when the user asks about a specific stock. Present news as a bullet list, one headline per bullet.\n3. The stock analysis only covers price data (trend, volatility, drawdown, or the snapshot for .NG). It does not cover earnings, debt or valuation, so say that when you give a view. Never call a stock safe or guaranteed. Use the tool rating (lower risk profile, moderate risk, high risk) and explain the reasons from the data. You are not a financial advisor, so end any buy or sell style answer with a short NFA (not financial advice) line.\n4. CHARTS: whenever you give an analysis of a single non-.NG stock (including when the user only sends a ticker or company name), and whenever the user asks for a chart, graph or price history, finish your reply with one last line exactly in this form: CHART: TICKER|RANGE, using the same ticker you passed to the tool. RANGE must be one of 1mo, 3mo, 6mo, 1y, 2y, 5y (use 6mo if the user did not say; honour a range they ask for, such as 5 year = 5y). When comparing stocks, chart the first one and offer the other. Use at most one chart per reply and put nothing after that line. Never use a CHART line for .NG stocks, and not for pure news answers.\n5. FORMAT: always itemize. Never write a stock analysis as a paragraph. Use this layout, one item per line, starting each item line with the bullet character • and a space, with a blank line between sections, and a bold section heading using **double asterisks**:\n\n**TSLA — Tesla** (USD)\n• Price: 358.22\n• Rating: **HIGH RISK**\n\n**Trend**\n• 50-day average: 372.14\n• 200-day average: 383.87\n• Returns: 1m -4.5% | 6m -16.4% | 12m -22.5%\n\n**Risk**\n• Volatility: 46%\n• 1y max drawdown: -39%\n• 52-week range: 298.32 – 489.88\n\n**Red flags**\n• Price below the 200-day average\n• Very high volatility\n\n**Takeaway**\n• One or two short bullet lines saying what the data suggests and what to watch for\n\n• Price data only, no earnings or valuation. NFA.\n\nFor comparisons use the same layout once per stock, then a **Verdict** section of bullets. Leave out sections that do not apply (for example no Red flags section if the tool returned none). For .NG stocks use the snapshot fields only and add an item saying it is a limited snapshot. For general chat answers keep it to short bullets or one or two sentences. No tables, no # headers. Keep the whole reply under about 170 words."
+        }
+      },
+      "id": "7dbb57e1-c1ad-4fee-be62-73b6fea2527a",
+      "name": "Scout Sly Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ String($('Telegram Message').first().json.message.chat.id) }}",
+        "contextWindowLength": 20
+      },
+      "id": "1043a982-7947-4ed7-9c2e-a916f1bfd5e0",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        560,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Looks up a stock by ticker and returns computed facts: latest price, 50 and 200 day averages, 1/6/12 month returns, yearly volatility, worst drop from peak, 52 week range position, red flags and a 0-100 risk score with a rating. Use exchange suffixes for non-US stocks (TSCO.L, 7203.T, SAP.DE, 0700.HK).",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Dex2UzieC9wWhzec"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticker": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ticker', 'Stock ticker symbol, with exchange suffix for non-US stocks, for example AAPL or TSCO.L') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticker",
+              "displayName": "ticker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "d9783089-2ffa-464c-8645-dd8b301d15ec",
+      "name": "get_stock_analysis",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $('Telegram Message').first().json.message.chat.id;\nconst NL = String.fromCharCode(10);\nconst out = String($input.first().json.output || '').trim();\nconst lines = out.split(NL);\nlet chartTicker = '';\nlet chartRange = '6mo';\nconst keep = [];\nfor (const line of lines) {\n  const t = line.trim();\n  if (t.toUpperCase().startsWith('CHART:')) {\n    const spec = t.slice(6).trim().split('|');\n    chartTicker = (spec[0] || '').trim().toUpperCase();\n    const r = (spec[1] || '').trim().toLowerCase();\n    if (['1mo', '3mo', '6mo', '1y', '2y', '5y'].includes(r)) chartRange = r;\n  } else {\n    keep.push(line);\n  }\n}\nlet body = keep.join(NL).trim();\nif (!body) body = 'Here is the chart.';\nbody = body.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');\nconst pieces = body.split('**');\nlet html = '';\nfor (let i = 0; i < pieces.length; i++) {\n  if (i > 0) html += (i % 2 === 1 ? '<b>' : '</b>');\n  html += pieces[i];\n}\nif (pieces.length % 2 === 0) html += '</b>';\nif (html.length > 3900) html = html.slice(0, 3900) + '...';\nconst symbolOk = chartTicker.length > 0 && chartTicker.length <= 15 && /^[A-Z0-9.^=-]+$/.test(chartTicker);\nreturn [{ json: { chatId, text: html, hasChart: symbolOk, chartTicker, chartRange } }];"
+      },
+      "id": "c5bd975f-df4b-4775-9f20-4e0be68ff4ed",
+      "name": "Prepare Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "22c26fce-b3b5-4fc6-bc64-bf9d1b3950ed",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1136,
+        112
+      ],
+      "webhookId": "a6111f4d-6640-444f-93d7-7697d2733e28",
+      "credentials": {
+        "telegramApi": {
+          "id": "8QBmU9ePgp75L6UK",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Prepare Reply\").item.json.hasChart }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e499fe77-90eb-41e3-8120-2a525f5c3fc8",
+      "name": "Chart Requested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($(\"Prepare Reply\").item.json.chartTicker) }}?range={{ $(\"Prepare Reply\").item.json.chartRange }}&interval={{ [\"2y\",\"5y\"].includes($(\"Prepare Reply\").item.json.chartRange) ? \"1wk\" : \"1d\" }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "471fe972-6b17-4ff7-a46c-218fad83159d",
+      "name": "Get Chart Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1584,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Prepare Reply').first().json;\nconst root = $input.first().json;\nconst res = root.chart && root.chart.result && root.chart.result[0];\nif (!res || !res.timestamp) { return []; }\nconst meta = res.meta || {};\nconst q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};\nconst bars = [];\nfor (let i = 0; i < res.timestamp.length; i++) {\n  if (q.close[i] === null || q.close[i] === undefined || q.open[i] === null || q.high[i] === null || q.low[i] === null) continue;\n  bars.push({ t: res.timestamp[i] * 1000, o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i], v: (q.volume && q.volume[i]) || 0 });\n}\nif (bars.length < 5) { return []; }\nconst r2 = (v) => Math.round(v * 100) / 100;\nconst allC = bars.map(x => x.c);\nconst smaAt = (k, pos) => {\n  if (pos + 1 < k) return null;\n  let s = 0;\n  for (let j = pos - k + 1; j <= pos; j++) s += allC[j];\n  return r2(s / k);\n};\nconst step = Math.max(1, Math.ceil(bars.length / 110));\nconst candles = [];\nconst vols = [];\nconst ma20 = [];\nconst ma50 = [];\nfor (let s = 0; s < bars.length; s += step) {\n  const e = Math.min(bars.length, s + step);\n  let hi = -Infinity, lo = Infinity, vs = 0;\n  for (let j = s; j < e; j++) { if (bars[j].h > hi) hi = bars[j].h; if (bars[j].l < lo) lo = bars[j].l; vs += bars[j].v; }\n  const x = bars[e - 1].t;\n  const o = bars[s].o, c = bars[e - 1].c;\n  candles.push({ x: x, o: r2(o), h: r2(hi), l: r2(lo), c: r2(c) });\n  vols.push({ x: x, y: Math.round(vs / (e - s)), up: c >= o });\n  const a = smaAt(20, e - 1), b = smaAt(50, e - 1);\n  if (a !== null) ma20.push({ x: x, y: a });\n  if (b !== null) ma50.push({ x: x, y: b });\n}\nconst firstC = bars[0].c;\nconst lastC = bars[bars.length - 1].c;\nconst chg = (lastC / firstC - 1) * 100;\nconst up = lastC >= firstC;\nconst UP = '#00e676', DOWN = '#ff5252';\nlet hiAll = -Infinity, loAll = Infinity;\nfor (const k of candles) { if (k.h > hiAll) hiAll = k.h; if (k.l < loAll) loAll = k.l; }\nconst pad = (hiAll - loAll) || hiAll * 0.05 || 1;\nconst yMinRaw = loAll - pad * 0.4;\nconst yMaxRaw = hiAll + pad * 0.08;\nconst yMin = pad >= 10 ? Math.floor(yMinRaw / 5) * 5 : r2(yMinRaw);\nconst yMax = pad >= 10 ? Math.ceil(yMaxRaw / 5) * 5 : r2(yMaxRaw);\nconst maxVol = Math.max.apply(null, vols.map(v => v.y)) || 1;\nconst name = meta.longName || meta.shortName || p.chartTicker;\nconst sym = meta.symbol || p.chartTicker;\nconst datasets = [];\ndatasets.push({ type: 'candlestick', label: 'Price', data: candles, yAxisID: 'y', color: { up: UP, down: DOWN, unchanged: '#9e9e9e' }, borderColor: { up: UP, down: DOWN, unchanged: '#9e9e9e' }, borderWidth: 1.4 });\nif (ma20.length > 3) datasets.push({ type: 'line', label: '20-day avg', data: ma20, yAxisID: 'y', borderColor: '#ffd54f', borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false });\nif (ma50.length > 3) datasets.push({ type: 'line', label: '50-day avg', data: ma50, yAxisID: 'y', borderColor: '#4fc3f7', borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false });\nif (maxVol > 1) datasets.push({ type: 'bar', label: 'Volume', data: vols.map(v => ({ x: v.x, y: v.y })), yAxisID: 'yv', backgroundColor: vols.map(v => v.up ? 'rgba(0,230,118,0.45)' : 'rgba(255,82,82,0.45)'), borderWidth: 0, barPercentage: 0.9, categoryPercentage: 1.0 });\nconst lastColor = up ? UP : DOWN;\nconst chartConfig = {\n  type: 'candlestick',\n  data: { datasets: datasets },\n  options: {\n    animation: false,\n    layout: { padding: { left: 12, right: 8, top: 6, bottom: 8 } },\n    plugins: {\n      title: { display: true, text: name + ' (' + sym + ')   ' + lastC.toFixed(2) + ' ' + (meta.currency || '') + '   ' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% / ' + p.chartRange, color: '#ffffff', font: { size: 20, weight: 'bold' }, padding: { top: 6, bottom: 12 } },\n      legend: { display: true, position: 'top', labels: { color: '#bdbdbd', boxWidth: 14, font: { size: 12 } } },\n      annotation: { annotations: { last: { type: 'line', scaleID: 'y', yScaleID: 'y', value: r2(lastC), yMin: r2(lastC), yMax: r2(lastC), borderColor: lastColor, borderWidth: 1, borderDash: [4, 4], label: { enabled: true, display: true, content: lastC.toFixed(2), position: 'end', backgroundColor: lastColor, color: '#000000', font: { size: 12, weight: 'bold' }, padding: 4 } } } }\n    },\n    scales: {\n      x: { type: 'timeseries', offset: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#9e9e9e', maxTicksLimit: 8, maxRotation: 0, source: 'auto' }, time: { unit: step > 3 ? 'month' : (bars.length > 120 ? 'month' : 'week'), displayFormats: { week: 'MMM d', month: 'MMM yy' } } },\n      y: { position: 'right', min: yMin, max: yMax, grid: { color: 'rgba(255,255,255,0.12)', borderDash: [3, 4] }, ticks: { color: '#e0e0e0', font: { size: 12 }, maxTicksLimit: 9 } },\n      yv: { position: 'left', min: 0, max: Math.round(maxVol * 4.2), display: false, grid: { display: false } }\n    }\n  }\n};\nconst esc = (v) => String(v).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');\nconst caption = esc(name) + ' (' + esc(sym) + '): ' + lastC.toFixed(2) + ' ' + esc(meta.currency || '') + ', ' + (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% over ' + p.chartRange;\nreturn [{ json: { chatId: p.chatId, chartConfig: chartConfig, caption: caption } }];"
+      },
+      "id": "0581243b-f1e7-4891-ad40-c5353fc1b76f",
+      "name": "Build Chart",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quickchart.io/chart",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chart: $json.chartConfig, width: 900, height: 540, devicePixelRatio: 2, backgroundColor: \"#000000\", version: \"3\", format: \"png\" }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "a1696da3-b7bb-40d8-8a1c-e0f50fe05aae",
+      "name": "Render Chart",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2032,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $(\"Build Chart\").item.json.chatId }}",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $(\"Build Chart\").item.json.caption }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "eac8e293-56ce-4d5e-acc0-38004ea1d61f",
+      "name": "Send Chart",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2256,
+        112
+      ],
+      "webhookId": "40931191-111b-4df8-9ac6-9fe55b6c2ebf",
+      "credentials": {
+        "telegramApi": {
+          "id": "8QBmU9ePgp75L6UK",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "5c19d65f-645a-4d33-8d81-97be135283ca",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        528
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OWkyM1RgKgaIthxZ",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Fetches the latest news headlines (with publish dates) from public news feeds. Use it for anything about current stock market events: market wraps, index moves (Dow, S&P 500, Nasdaq, FTSE, Nikkei), a company or sector in the news, why a stock moved, earnings, central bank decisions. Pass a short search query such as stock market today, Tesla stock, or FTSE 100.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "AgftWnOzxcIPT2c1"
+        },
+        "workflowInputs": {
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "canBeUsedToMatch": true,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "query",
+              "id": "query",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', 'Short news search query, for example stock market today, Tesla stock, or FTSE 100', 'string') }}"
+          }
+        }
+      },
+      "id": "4197ea45-8b0a-4774-9f18-9341a2fd49da",
+      "name": "get_market_news",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ [\"/start\",\"/help\",\"start\",\"hi\",\"hello\",\"hey\",\"hi sly\",\"hello sly\",\"hey sly\",\"hi scout\",\"hello scout\",\"hey scout\",\"hi scout sly\",\"hello scout sly\",\"hey scout sly\",\"good morning\",\"good afternoon\",\"good evening\",\"yo\",\"sup\"].includes(String($json.message.text).trim().toLowerCase().split(\"!\").join(\"\").split(\".\").join(\"\").split(\",\").join(\"\").split(\"?\").join(\"\")) }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "8b4a7681-2807-4f3a-ae2a-ec82bed8ba3d",
+      "name": "Is Greeting?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "Hi I’m Scout Sly, how can i help you ? Wanna know about the latest happenings in the world of Stocks ?\nTo start, send a ticker (e.g., AAPL, TSLA, TSCO.L) or ask for a comparison or chart. What would you like?",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "963a542e-784e-485b-bd40-9adbdb6b6a6d",
+      "name": "Send Greeting",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        48
+      ],
+      "webhookId": "a8be5e66-4ed4-43d1-92d3-6bcb84aabb89",
+      "credentials": {
+        "telegramApi": {
+          "id": "8QBmU9ePgp75L6UK",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Has Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Scout Sly Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_stock_analysis": {
+      "ai_tool": [
+        [
+          {
+            "node": "Scout Sly Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply": {
+      "main": [
+        [
+          {
+            "node": "Chart Requested?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chart Requested?": {
+      "main": [
+        [
+          {
+            "node": "Get Chart Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chart Data": {
+      "main": [
+        [
+          {
+            "node": "Build Chart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Chart": {
+      "main": [
+        [
+          {
+            "node": "Render Chart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Chart": {
+      "main": [
+        [
+          {
+            "node": "Send Chart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Scout Sly Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scout Sly Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_market_news": {
+      "ai_tool": [
+        [
+          {
+            "node": "Scout Sly Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Text?": {
+      "main": [
+        [
+          {
+            "node": "Is Greeting?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Greeting?": {
+      "main": [
+        [
+          {
+            "node": "Send Greeting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scout Sly Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "7ecd9137-6e5b-4eb8-8494-ecc6cdf4d70a",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2b46ef7ecde37a7f14106f50082a2849db8eb532faf3a814111a2cdbbe0834c3"
+  },
+  "nodeGroups": [],
+  "id": "ysFMqdyjqq23Fts4",
+  "tags": []
+}

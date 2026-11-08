@@ -1,0 +1,212 @@
+{
+  "name": "Stock Analysis Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "ticker"
+            }
+          ]
+        }
+      },
+      "id": "85f4f586-074b-4910-8fd8-9e75093e1a68",
+      "name": "Tool Input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent(String($json.ticker).trim().toUpperCase()) }}?range=2y&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "77d07ede-29ba-4206-96e6-a8127ca60514",
+      "name": "Get Price History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ticker = String($('Tool Input').first().json.ticker || '').trim().toUpperCase();\nconst raw = $input.first().json || {};\nconst res = raw.chart && raw.chart.result && raw.chart.result[0];\nif (!res) {\n  return [{ json: { found: false, ticker, reason: 'No price data found. The symbol may be wrong. Non-US stocks need an exchange suffix such as .L (London), .T (Tokyo), .DE (Germany), .HK (Hong Kong).' } }];\n}\nconst meta = res.meta || {};\nconst closes = ((res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close) || []).filter(v => v !== null && v !== undefined);\nif (closes.length < 210) {\n  return [{ json: { found: false, ticker, reason: 'Only ' + closes.length + ' trading days of history. At least about 210 are needed for a trend and risk check. Recently listed stocks are higher risk.' } }];\n}\nconst n = closes.length;\nconst last = closes[n - 1];\nconst avg = (a) => a.reduce((s, v) => s + v, 0) / a.length;\nconst sma50 = avg(closes.slice(n - 50));\nconst sma200 = avg(closes.slice(n - 200));\nconst ret = (d) => (n > d ? last / closes[n - 1 - d] - 1 : null);\nconst r1m = ret(21), r6m = ret(126), r12m = ret(252);\nconst rets = [];\nfor (let i = n - 252; i < n; i++) { if (i > 0) rets.push(Math.log(closes[i] / closes[i - 1])); }\nconst m = avg(rets);\nconst sd = Math.sqrt(rets.reduce((s, v) => s + (v - m) * (v - m), 0) / (rets.length - 1));\nconst vol = sd * Math.sqrt(252);\nconst yr = closes.slice(Math.max(0, n - 252));\nlet peak = yr[0], maxDD = 0;\nfor (const q of yr) { if (q > peak) peak = q; const dd = q / peak - 1; if (dd < maxDD) maxDD = dd; }\nconst hi = Math.max.apply(null, yr), lo = Math.min.apply(null, yr);\nconst pos = (last - lo) / (hi - lo);\nlet trend = 0;\nif (last > sma200) trend += 15;\nif (sma50 > sma200) trend += 10;\nif (last > sma50) trend += 5;\nif (r6m !== null && r6m > 0) trend += 10;\nlet risk = 0;\nrisk += vol < 0.2 ? 20 : vol < 0.3 ? 14 : vol < 0.45 ? 8 : 2;\nrisk += maxDD > -0.15 ? 20 : maxDD > -0.25 ? 14 : maxDD > -0.4 ? 7 : 2;\nconst rng = pos >= 0.4 && pos <= 0.9 ? 20 : pos > 0.9 ? 12 : 8;\nconst score = trend + risk + rng;\nconst rating = score >= 75 ? 'LOWER RISK PROFILE' : score >= 55 ? 'MODERATE RISK' : 'HIGH RISK';\nconst r2 = (v) => (v === null ? null : Math.round(v * 10000) / 100);\nconst flags = [];\nif (last < sma200) flags.push('Price below 200-day average (long-term downtrend)');\nif (sma50 < sma200) flags.push('50-day average below 200-day average (weak trend)');\nif (vol >= 0.45) flags.push('Very high volatility');\nif (maxDD <= -0.4) flags.push('Fell more than 40% from its peak within the last year');\nif (pos > 0.95) flags.push('At the top of its 52-week range, high pullback risk');\nif (r1m !== null && r1m < -0.15) flags.push('Dropped more than 15% in the last month');\nreturn [{ json: {\n  found: true,\n  symbol: meta.symbol || ticker,\n  name: meta.longName || meta.shortName || ticker,\n  exchange: meta.exchangeName || '',\n  currency: meta.currency || '',\n  price: Math.round(last * 100) / 100,\n  sma50: Math.round(sma50 * 100) / 100,\n  sma200: Math.round(sma200 * 100) / 100,\n  high52w: Math.round(hi * 100) / 100,\n  low52w: Math.round(lo * 100) / 100,\n  return1mPct: r2(r1m),\n  return6mPct: r2(r6m),\n  return12mPct: r2(r12m),\n  volatilityPct: r2(vol),\n  maxDrawdown1yPct: r2(maxDD),\n  rangePositionPct: r2(pos),\n  trendScore: trend,\n  riskScore: risk,\n  rangeScore: rng,\n  score,\n  rating,\n  redFlags: flags\n} }];"
+      },
+      "id": "e1b3c4c9-0078-4676-9bed-eae60cddabc8",
+      "name": "Analyze Stock",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ng1",
+              "leftValue": "={{ String($json.ticker).trim().toUpperCase() }}",
+              "operator": {
+                "operation": "endsWith",
+                "type": "string"
+              },
+              "rightValue": ".NG"
+            }
+          ],
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "8d35dc1b-af12-4828-b11d-7751ee3b70e3",
+      "name": "Is Nigerian?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.ngnmarket.com/v1/companies?limit=10&search={{ encodeURIComponent(String($json.ticker).trim().toUpperCase().replace('.NG','')) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ngm_live_WzmQHlJkH7F_6uBx9rdb_NPohcmx_ZzKmhw-mnklLHQ3RdQa"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ad346ca9-66b0-4779-bd19-7e370a157fac",
+      "name": "NGN Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ticker = String($('Tool Input').first().json.ticker || '').trim().toUpperCase();\nconst want = ticker.replace('.NG', '');\nconst raw = $input.first().json || {};\nconst list = (raw.data && raw.data.data) || [];\nif (!raw.success || !list.length) {\n  return [{ json: { found: false, ticker, reason: 'No Nigerian Exchange (NGX) company matched ' + want + '. Ask the user for the exact NGX symbol, for example DANGCEM, DANGSUGAR, GTCO, ZENITHBANK, MTNN.' } }];\n}\nlet c = list.find(function (x) { return String(x.symbol).toUpperCase() === want; });\nif (!c) c = list[0];\nconst price = Number(c.price);\nconst hi = Number(c.high_52wk);\nconst lo = Number(c.low_52wk);\nconst m52 = Number(c.change_52w_percent);\nconst ytd = Number(c.change_ytd_percent);\nconst m1 = Number(c.change_1m_percent);\nconst d7 = Number(c.change_7d_percent);\nconst pos = hi > lo ? (price - lo) / (hi - lo) : 0.5;\nconst fromHigh = hi > 0 ? price / hi - 1 : 0;\nconst widthRatio = lo > 0 ? hi / lo : 99;\nlet momentum = 0;\nif (m52 > 0) momentum += 15;\nif (ytd > 0) momentum += 10;\nif (m1 > 0) momentum += 10;\nif (d7 > 0) momentum += 5;\nlet risk = 0;\nrisk += widthRatio < 1.5 ? 20 : widthRatio < 2.5 ? 12 : 4;\nrisk += fromHigh > -0.1 ? 20 : fromHigh > -0.25 ? 14 : fromHigh > -0.4 ? 7 : 2;\nconst rng = pos >= 0.4 && pos <= 0.9 ? 20 : pos > 0.9 ? 12 : 8;\nconst score = momentum + risk + rng;\nconst rating = score >= 75 ? 'LOWER RISK PROFILE' : score >= 55 ? 'MODERATE RISK' : 'HIGH RISK';\nconst flags = [];\nif (widthRatio >= 2.5) flags.push('52-week high is more than 2.5 times the 52-week low (very large price swings)');\nif (fromHigh <= -0.25) flags.push('Trading more than 25% below its 52-week high');\nif (pos > 0.95) flags.push('At the top of its 52-week range, high pullback risk');\nif (m1 < -10) flags.push('Dropped more than 10% in the last month');\nif (ytd > 100) flags.push('Up more than 100% this year, so a pullback is possible');\nconst r2 = function (v) { return Math.round(v * 100) / 100; };\nreturn [{ json: {\n  found: true,\n  limitedData: true,\n  dataNote: 'NGX snapshot only: current price, 52-week range and 7d/1m/YTD/52w changes. No price history, so no moving averages, volatility or drawdown, and no chart. Lower confidence than other stocks.',\n  symbol: c.symbol + '.NG',\n  name: c.name,\n  exchange: 'Nigerian Exchange (NGX)',\n  currency: 'NGN',\n  price: price,\n  high52w: hi,\n  low52w: lo,\n  change7dPct: d7,\n  change1mPct: m1,\n  changeYtdPct: ytd,\n  change52wPct: m52,\n  fromHigh52wPct: r2(fromHigh * 100),\n  rangePositionPct: r2(pos * 100),\n  sector: c.sector,\n  lastUpdated: c.last_updated,\n  momentumScore: momentum,\n  riskScore: risk,\n  rangeScore: rng,\n  score: score,\n  rating: rating,\n  redFlags: flags\n} }];"
+      },
+      "id": "e4a9f0cd-ddaa-4986-b0b3-b8c02c624fc3",
+      "name": "Analyze NGX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -160
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Price History": {
+      "main": [
+        [
+          {
+            "node": "Analyze Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool Input": {
+      "main": [
+        [
+          {
+            "node": "Is Nigerian?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Nigerian?": {
+      "main": [
+        [
+          {
+            "node": "NGN Search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Price History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NGN Search": {
+      "main": [
+        [
+          {
+            "node": "Analyze NGX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "0a12db52-4933-4357-b0a6-b689369e29b0",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "2b46ef7ecde37a7f14106f50082a2849db8eb532faf3a814111a2cdbbe0834c3"
+  },
+  "nodeGroups": [],
+  "id": "Dex2UzieC9wWhzec",
+  "tags": []
+}
